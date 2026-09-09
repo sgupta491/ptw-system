@@ -1,0 +1,20 @@
+package com.ptw.ptw.enums;
+
+public enum PermitWorkflowAction {
+
+    SUBMITTED,
+    VERIFY_AND_ACCEPT,
+    SENT_BACK,
+    RESUBMITTED,
+    ASSESSMENT_COMPLETED,
+    ISSUER_APPROVED,
+    ELECTRICAL_ISOLATION,
+    ACCEPTED,
+    EXTENDED,
+    SUSPENDED,
+    TERMINATED,
+    REVALIDATED,
+    WORK_COMPLETED,
+    FINAL_VERIFICATION,
+    CLOSED
+}

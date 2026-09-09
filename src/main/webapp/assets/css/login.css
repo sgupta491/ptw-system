@@ -1,0 +1,41 @@
+
+        body {
+            min-height: 100vh;
+            background: #f4f6f8;
+        }
+
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.10);
+        }
+
+        .login-title {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        .form-control {
+            padding: 11px 12px;
+            border-radius: 6px;
+        }
+
+        .form-control:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 0.2rem rgba(22, 119, 255, 0.15);
+        }
+
+        .login-btn {
+            padding: 11px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
