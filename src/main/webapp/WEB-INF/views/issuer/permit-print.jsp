@@ -704,12 +704,11 @@
                         </td>
 
 
-                       <%-- <td>
-
+                       <td>
+                       <strong>
                             ${measure.answeredBy}
-
-                        </td> --%>
-
+                            </strong>
+                           </td>
                     </tr>
 
                 </c:forEach>

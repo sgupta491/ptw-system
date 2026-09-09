@@ -154,11 +154,18 @@
 
                     </div>
                     <div class="card-body">
-                        <p class="text-muted mb-0">
-                            Documents submitted with the
-                            work completion report are associated
-                            with this permit.
-                        </p>
+                         <c:forEach items="${documents}" var="document">
+                             <div class="d-flex justify-content-between align-items-center mb-2">
+                                 <span>
+                                     ${document.originalFileName}
+                                 </span>
+                                 <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}/documents/${document.id}"
+                                    target="_blank"
+                                    class="btn btn-outline-primary btn-sm">
+                                     Open Document
+                                 </a>
+                             </div>
+                         </c:forEach>
                     </div>
                 </div>
                 <!-- ACTION -->

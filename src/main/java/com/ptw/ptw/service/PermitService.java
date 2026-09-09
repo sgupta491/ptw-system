@@ -2,6 +2,7 @@ package com.ptw.ptw.service;
 
 import com.ptw.ptw.dto.*;
 import com.ptw.ptw.entity.Permit;
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -46,4 +47,8 @@ public interface PermitService {
     PermitResponse getPermitForFinalVerification(Long permitId,String username);
 
     PermitResponse completeFinalVerification(Long permitId, FinalVerificationRequest request,String username);
+
+    PermitFullViewResponse getFullPermitView(Long permitId, String username);
+
+    Resource getPermitDocument(Long permitId,Long documentId,String username);
 }

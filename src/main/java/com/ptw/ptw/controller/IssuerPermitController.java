@@ -7,11 +7,18 @@ import com.ptw.ptw.service.*;
 import jakarta.validation.Valid;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
+
+import java.io.IOException;
+import java.nio.file.Files;
 
 import java.util.List;
 
@@ -81,6 +88,8 @@ public class IssuerPermitController {
         model.addAttribute("permit", permitService.findPermitById(id));
         return "issuer/permit-view";
     }
+
+
 
 
     @PostMapping("/{id}/submit")
@@ -192,7 +201,7 @@ public class IssuerPermitController {
 
             permitAssessmentService.saveAssessment(id,request,authentication.getName());
 
-            return "redirect:/issuer/permits/" + id;
+            return "redirect:/{id}/approval";
         } catch (RuntimeException e) {
 
             model.addAttribute("error",e.getMessage());
@@ -239,7 +248,12 @@ public class IssuerPermitController {
     public String finalVerificationPage(@PathVariable Long id, Authentication authentication, Model model) {
 
         PermitResponse permit =permitService.getPermitForFinalVerification(id,authentication.getName());
+
+        PermitFullViewResponse fullresponse =permitService.getFullPermitView(id, authentication.getName());
+        List<PermitDocumentViewResponse> documents = fullresponse.getDocuments();
+
         model.addAttribute("permit", permit);
+        model.addAttribute("documents", documents);
 
         return "issuer/permit-final-verification";
     }
@@ -247,9 +261,19 @@ public class IssuerPermitController {
     @PostMapping("/{id}/final-verification")
     public String completeFinalVerification(@PathVariable Long id,@ModelAttribute FinalVerificationRequest request,
             Authentication authentication) {
+
         permitService.completeFinalVerification(id,request,authentication.getName());
 
         return "redirect:/issuer/permits";
+    }
+
+    @GetMapping("/{id}/full-view")
+    public String fullPermitView(@PathVariable Long id, Authentication authentication, Model model) {
+
+        PermitFullViewResponse permit = permitService.getFullPermitView(id,authentication.getName());
+        model.addAttribute("permit", permit);
+
+        return "issuer/permit-full-view";
     }
 
     private void loadIssuer(Authentication authentication, Model model) {
@@ -264,5 +288,27 @@ public class IssuerPermitController {
         model.addAttribute("permitTypes",permitTypeService.findActive());
         model.addAttribute("contractors",contractorService.findAll());
         model.addAttribute("departments",departmentService.findAll());
+    }
+
+
+
+    @GetMapping("/{permitId}/documents/{documentId}")
+    public ResponseEntity<Resource> openDocument(@PathVariable Long permitId, @PathVariable Long documentId,
+                                        Authentication authentication) throws IOException {
+
+        Resource resource = permitService.getPermitDocument(permitId, documentId, authentication.getName());
+        String contentType = Files.probeContentType(resource.getFile().toPath());
+
+        if (contentType == null) {
+            contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentType))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" +
+                                resource.getFilename() +
+                                "\"")
+                .body(resource);
     }
 }

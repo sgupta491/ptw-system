@@ -3,6 +3,7 @@ package com.ptw.ptw.dto;
 import com.ptw.ptw.enums.PermitStatus;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
+import java.time.format.DateTimeFormatter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -50,6 +51,16 @@ public class PermitResponse {
 
     @DateTimeFormat(pattern = "dd-MM-yyyy")
     private LocalDate validOnDate;
+
+    public String getFormattedValidOnDate() {
+        if (validOnDate == null) {
+            return "";
+        }
+
+        return validOnDate.format(
+                DateTimeFormatter.ofPattern("dd-MM-yyyy")
+        );
+    }
 
     @DateTimeFormat(pattern = "HH:mm")
     private LocalTime timeFrom;

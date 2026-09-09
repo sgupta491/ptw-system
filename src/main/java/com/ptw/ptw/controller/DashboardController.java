@@ -22,11 +22,11 @@ public class DashboardController {
         }
 
         if ("ROLE_ISSUER".equals(role)) {
-            return "redirect:/issuer/dashboard";
+            return "redirect:/issuer/permits";
         }
 
         if ("ROLE_ACCEPTOR".equals(role)) {
-            return "redirect:/acceptor/dashboard";
+            return "redirect:/acceptor/permits";
         }
 
         if ("ROLE_ELECTRICIAN".equals(role)) {

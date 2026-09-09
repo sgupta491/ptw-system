@@ -51,9 +51,10 @@
                         <table class="table table-bordered table-hover align-middle">
                             <thead class="table-light">
                             <tr>
+                                  <th>Sr. No.</th>
                                 <th>Permit Number</th>
                                 <th>Permit Type</th>
-                                <th>Issuer</th>
+                                <th>Acceptor</th>
                                 <th>Contractor</th>
                                 <th>Valid Date</th>
                                 <th> Status</th>
@@ -62,11 +63,12 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <c:forEach items="${permits}" var="permit">
+                            <c:forEach items="${permits}" var="permit" varStatus="status">
                                 <tr>
+                                     <td>${status.count}</td>
                                     <td><strong> ${permit.permitNumber} </strong></td>
                                     <td> ${permit.permitType} </td>
-                                    <td> ${permit.issuerName}</td>
+                                    <td> ${permit.acceptorName}</td>
                                     <td>
                                         <c:choose>
                                             <c:when test="${permit.contractorDeployed}">
@@ -89,7 +91,7 @@
                                     </td>
                                     <!-- Valid Date -->
                                     <td>
-                                        ${permit.validOnDate}
+                                         ${permit.formattedValidOnDate}
                                     </td>
                                     <!-- Status -->
                                     <td>
@@ -127,10 +129,13 @@
                                         </span>
                                     </td>
                                     <!-- Action -->
-                                    <td> <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}"
+                                    <td>
+                                     <c:if test="${permit.status == 'DRAFT' || permit.status == 'ACCEPTOR_VERIFICATION'}">
+                                    <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}"
                                                 class="btn btn-sm btn-primary">
                                             View
                                         </a>
+                                         </c:if>
                                         <!-- Returned -->
                                         <c:if test="${permit.status == 'RETURNED'}">
                                             <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}/edit"
@@ -172,6 +177,12 @@
                                                        class="btn btn-warning btn-sm">
                                                        Close
                                                     </a>
+                                                </c:if>
+
+                                                <c:if test="${permit.status == 'CLOSED'}">
+                                                     <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}/full-view"
+                                                               class="btn btn-primary btn-sm">
+                                                               View </a>
                                                 </c:if>
                                     </td>
                                 </tr>

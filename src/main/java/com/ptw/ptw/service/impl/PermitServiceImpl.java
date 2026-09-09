@@ -15,6 +15,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileSystemResource;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 @Transactional
@@ -40,6 +47,8 @@ public class PermitServiceImpl implements PermitService {
     private final DocumentStorageService documentStorageService;
 
     private final PermitFinalVerificationRepository finalVerificationRepository;
+
+
 
     @Override
     public PermitResponse createPermit(PermitRequest permitRequest, String username) {
@@ -715,6 +724,204 @@ public class PermitServiceImpl implements PermitService {
     }
 
 
+
+    @Override
+    @Transactional
+    public PermitFullViewResponse getFullPermitView(Long permitId, String username) {
+
+        Permit permit = permitRepository.findById(permitId)
+                .orElseThrow(() ->new RuntimeException("Permit not found"));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->new RuntimeException("User not found"));
+
+        boolean isIssuer = permit.getIssuer() != null && permit.getIssuer().getId().equals(user.getId());
+
+        boolean isAcceptor = permit.getAcceptor() != null && permit.getAcceptor().getId().equals(user.getId());
+
+        if (!isIssuer && !isAcceptor) {
+            throw new RuntimeException("You are not authorized to view this permit"
+            );
+        }
+
+      /*  if (permit.getPermitStatus() != PermitStatus.CLOSED) {
+            throw new RuntimeException("Full permit history is available after closure"
+            );
+        }*/
+
+        /*
+         * C
+         */
+        List<HazardOption> hazards = permitHazardRepository.findByPermit(permit)
+                                    .stream()
+                                    .map(PermitHazard::getHazard)
+                                    .map(hazard ->
+                                            HazardOption.builder()
+                                                    .id(hazard.getId())
+                                                    .hazardCode(hazard.getHazardCode())
+                                                    .hazardName(hazard.getHazardName())
+                                                    .hazardCategory(hazard.getHazardCategory())
+                                                    .displayOrder(hazard.getDisplayOrder())
+                                                    .build())
+                                                    .toList();
+
+        /*
+         * D
+         */
+        List<ChecklistApprovalResponse> checklistResponses = checklistResponseRepository.findByPermit(permit)
+                        .stream()
+                        .map(response -> {
+                            List<PermitChecklistResponseField> fields = checklistResponseFieldRepository
+                                            .findByResponse(response);
+                            java.util.Map<String, String> fieldValues =
+                                    fields.stream().collect(
+                                                    java.util.stream.Collectors
+                                                            .toMap(PermitChecklistResponseField::getFieldCode,
+                                                                    PermitChecklistResponseField::getFieldValue,
+                                                                    (first, second) -> second ));
+
+                            return ChecklistApprovalResponse.builder()
+                                    .checklistId(response.getChecklist().getId())
+                                    .questionCode(response.getQuestionCode())
+                                    .questionText(response.getQuestionText())
+                                    .response(response.getResponse())
+                                    .measureImplementedBy(response.getMeasureImplementedBy() != null ? response.getMeasureImplementedBy()
+                                                    .getFirstName() + " " + response.getMeasureImplementedBy().getLastName(): null)
+                                    .measureImplementedAt(response.getMeasureImplementedAt())
+                                    .fieldValues(fieldValues)
+                                    .build();
+                        })
+                        .toList();
+
+        /*
+         * E
+         */
+        List<PostWorkMeasureResponse> postWorkMeasures = postWorkMeasureRepository.findByPermit(permit)
+                        .stream()
+                        .map(measure ->
+                                PostWorkMeasureResponse.builder()
+                                        .itemCode(measure.getItemCode())
+                                        .itemText(measure.getItemText())
+                                        .response(measure.getResponse())
+                                        .otherText(measure.getOtherText())
+                                        .answeredBy(measure.getAnsweredBy() != null ? measure.getAnsweredBy()
+                                                        .getFirstName()+ " "+ measure.getAnsweredBy().getLastName(): null)
+                                        .answeredAt(measure.getAnsweredAt())
+                                        .build()
+                        )
+                        .toList();
+
+        /*
+         * H
+         */
+        WorkCompletionViewResponse workCompletion = null;
+
+        Optional<PermitWorkCompletion> completionOptional = workCompletionRepository.findByPermit(permit);
+
+        if (completionOptional.isPresent()) {
+            PermitWorkCompletion completion =  completionOptional.get();
+
+            workCompletion = WorkCompletionViewResponse.builder()
+                            .completionResponse(completion.getCompletionResponse())
+                            .completedBy(completion.getCompletedBy() != null ? completion.getCompletedBy()
+                                            .getFirstName()+ " "+ completion.getCompletedBy().getLastName(): null)
+                            .completedAt(completion.getCompletedAt())
+                            .contractorSupervisorName(completion.getContractorSupervisorName())
+                            .signatureRequired(Boolean.TRUE.equals(completion.getSignatureRequired()))
+                            .contractorSupervisorSignatureRequired(Boolean.TRUE.equals(completion.getContractorSupervisorSignatureRequired()))
+                            .build();
+        }
+
+        /*
+         * I
+         */
+        FinalVerificationViewResponse finalVerification = null;
+
+        Optional<PermitFinalVerification> verificationOptional = finalVerificationRepository.findByPermit(permit);
+
+        if (verificationOptional.isPresent()) {
+
+            PermitFinalVerification verification = verificationOptional.get();
+
+            finalVerification =
+                    FinalVerificationViewResponse.builder()
+                            .verifiedBy( verification.getVerifiedBy() != null ? verification.getVerifiedBy().getFirstName()
+                                            + " " + verification.getVerifiedBy().getLastName(): null)
+                            .verifiedAt(verification.getVerifiedAt())
+                            .remarks(verification.getRemarks())
+                            .signatureRequired(Boolean.TRUE.equals(verification.getSignatureRequired()))
+                            .build();
+        }
+
+        /*
+         * Documents
+         */
+        List<PermitDocumentViewResponse> documents =
+                permitDocumentRepository.findByPermit(permit)
+                        .stream()
+                        .map(document ->
+                                PermitDocumentViewResponse.builder()
+                                        .id(document.getId())
+                                        .documentType(document.getDocumentType())
+                                        .originalFileName(document.getOriginalFileName())
+                                        .contentType(document.getContentType())
+                                        .uploadedBy(document.getUploadedBy() != null ? document.getUploadedBy().getFirstName()
+                                                        + " " + document.getUploadedBy().getLastName(): null)
+                                        .uploadedAt(document.getUploadedAt())
+                                        .build())
+                        .toList();
+
+        return PermitFullViewResponse.builder()
+                .permit(mapToResponse(permit))
+                .hazards(hazards)
+                .otherHazards(permit.getOtherHazards())
+                .relatedPermitNumber(permit.getRelatedPermitNumber())
+                .checklistResponses(checklistResponses)
+                .postWorkMeasures(postWorkMeasures)
+                .issuerApprovalDateTime(permit.getIssuerApprovalDateTime())
+                .workCompletion(workCompletion)
+                .finalVerification(finalVerification)
+                .documents(documents)
+                .build();
+    }
+
+
+    @Override
+    @Transactional
+    public Resource getPermitDocument(Long permitId,Long documentId,String username) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->new RuntimeException("User not found"));
+
+        Permit permit = permitRepository.findById(permitId)
+                .orElseThrow(() ->new RuntimeException("Permit not found"));
+
+        boolean isIssuer = permit.getIssuer() != null && permit.getIssuer().getId().equals(user.getId());
+        boolean isAcceptor = permit.getAcceptor() != null && permit.getAcceptor().getId().equals(user.getId());
+
+        if (!isIssuer && !isAcceptor) {
+            throw new RuntimeException("You are not authorized to view this document");
+        }
+
+        // Document
+        PermitDocument document = permitDocumentRepository.findById(documentId)
+                        .orElseThrow(() ->new RuntimeException("Document not found"));
+
+        if (document.getPermit() == null || !document.getPermit().getId().equals(permitId)) {
+            throw new RuntimeException("Document does not belong to this permit");
+        }
+        // Physical file
+        Path filePath = Paths.get(document.getFilePath()).toAbsolutePath().normalize();
+
+        Resource resource = new FileSystemResource(filePath);
+
+        if (!resource.exists() || !resource.isReadable()) {
+            throw new RuntimeException("Document file not found or not readable");
+        }
+        return resource;
+    }
+
+
     private PermitApprovalResponse buildPermitApprovalResponse(Permit permit) {
 
         List<HazardOption> hazards = permitHazardRepository.findByPermit(permit)
@@ -735,36 +942,22 @@ public class PermitServiceImpl implements PermitService {
                         .stream()
                         .map(response -> {
 
-                            List<PermitChecklistResponseField> fields =
-                                    checklistResponseFieldRepository
-                                            .findByResponse(response);
+                            List<PermitChecklistResponseField> fields = checklistResponseFieldRepository.findByResponse(response);
 
                             Map<String, String> fieldValues =
                                     fields.stream()
-                                            .collect(
-                                                    java.util.stream.Collectors.toMap(
+                                            .collect(java.util.stream.Collectors.toMap(
                                                             PermitChecklistResponseField::getFieldCode,
-                                                            PermitChecklistResponseField::getFieldValue
-                                                    )
-                                            );
+                                                            PermitChecklistResponseField::getFieldValue));
 
                             return ChecklistApprovalResponse.builder()
                                     .checklistId(response.getChecklist().getId())
                                     .questionCode(response.getQuestionCode())
                                     .questionText(response.getQuestionText())
                                     .response(response.getResponse())
-                                    .measureImplementedBy(
-                                            response.getMeasureImplementedBy() != null
-                                                    ? response.getMeasureImplementedBy()
-                                                    .getFirstName()
-                                                    + " "
-                                                    + response.getMeasureImplementedBy()
-                                                    .getLastName()
-                                                    : null
-                                    )
-                                    .measureImplementedAt(
-                                            response.getMeasureImplementedAt()
-                                    )
+                                    .measureImplementedBy(response.getMeasureImplementedBy() != null ? response.getMeasureImplementedBy()
+                                                    .getFirstName()+ " " + response.getMeasureImplementedBy().getLastName(): null)
+                                    .measureImplementedAt(response.getMeasureImplementedAt())
                                     .fieldValues(fieldValues)
                                     .build();
 
@@ -781,15 +974,8 @@ public class PermitServiceImpl implements PermitService {
                                         .itemText(measure.getItemText())
                                         .response(measure.getResponse())
                                         .otherText(measure.getOtherText())
-                                        .answeredBy(
-                                                measure.getAnsweredBy() != null
-                                                        ? measure.getAnsweredBy()
-                                                        .getFirstName()
-                                                        + " "
-                                                        + measure.getAnsweredBy()
-                                                        .getLastName()
-                                                        : null
-                                        )
+                                        .answeredBy(measure.getAnsweredBy() != null? measure.getAnsweredBy().getFirstName()
+                                                        + " "+ measure.getAnsweredBy().getLastName(): null)
                                         .answeredAt(measure.getAnsweredAt())
                                         .build()
                         )
