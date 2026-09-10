@@ -46,7 +46,7 @@ public class AcceptorPermitServiceImpl implements AcceptorPermitService {
                 PermitStatus.ACTIVE
         );
 
-        return permitRepository.findByAcceptorIdAndPermitStatusIn(acceptor.getId(),pendingStatuses)
+        return permitRepository.findByAcceptorIdAndPermitStatusInOrderByIdDesc(acceptor.getId(),pendingStatuses)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();

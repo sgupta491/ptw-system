@@ -22,7 +22,7 @@ public interface PermitRepository extends JpaRepository<Permit, Long> {
 
     List<Permit> findByAcceptorIdAndPermitStatus(Long acceptorId, PermitStatus permitStatus);
 
-    List<Permit> findByAcceptorIdAndPermitStatusIn(Long acceptorId,List<PermitStatus> statuses);
+    List<Permit> findByAcceptorIdAndPermitStatusInOrderByIdDesc(Long acceptorId,List<PermitStatus> statuses);
 
     List<Permit> findByIssuerIdAndPermitStatus(Long issuerId, PermitStatus permitStatus);
 

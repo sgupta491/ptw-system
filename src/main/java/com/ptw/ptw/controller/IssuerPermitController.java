@@ -201,7 +201,7 @@ public class IssuerPermitController {
 
             permitAssessmentService.saveAssessment(id,request,authentication.getName());
 
-            return "redirect:/{id}/approval";
+            return "redirect:/issuer/permits/{id}/approval";
         } catch (RuntimeException e) {
 
             model.addAttribute("error",e.getMessage());

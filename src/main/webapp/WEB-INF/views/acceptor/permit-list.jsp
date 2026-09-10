@@ -25,6 +25,7 @@
                                       table-hover align-middle">
                             <thead class="table-light">
                             <tr>
+                              <th>Sr. No.</th>
                                <th>Permit Number</th>
                                 <th>Permit Type</th>
                                 <th>Issuer</th>
@@ -35,8 +36,9 @@
                             </tr>
                             </thead>
                             <tbody>
-                            <c:forEach items="${permits}" var="permit">
+                            <c:forEach items="${permits}" var="permit" varStatus="status">
                                 <tr>
+                                     <td>${status.count}</td>
                                     <td>${permit.permitNumber}</td>
                                     <td>${permit.permitType}</td>
                                     <td>${permit.issuerName}</td>
@@ -47,7 +49,7 @@
                                             <c:otherwise>No </c:otherwise>
                                         </c:choose>
                                     </td>
-                                    <td>${permit.validOnDate} </td>
+                                    <td> ${permit.formattedValidOnDate} </td>
                                     <td>
                                      <c:choose>
                                             <c:when test="${permit.status == 'ACCEPTOR_VERIFICATION'}">

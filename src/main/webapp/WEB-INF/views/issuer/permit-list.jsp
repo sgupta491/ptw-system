@@ -66,7 +66,7 @@
                             <c:forEach items="${permits}" var="permit" varStatus="status">
                                 <tr>
                                      <td>${status.count}</td>
-                                    <td><strong> ${permit.permitNumber} </strong></td>
+                                    <td> ${permit.permitNumber}</td>
                                     <td> ${permit.permitType} </td>
                                     <td> ${permit.acceptorName}</td>
                                     <td>
