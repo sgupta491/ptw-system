@@ -3,6 +3,8 @@ package com.ptw.ptw.dto;
 import com.ptw.ptw.enums.PermitStatus;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import java.time.LocalDate;
@@ -43,6 +45,8 @@ public class PermitResponse {
 
     private String proposedWork;
 
+    private String proposedWorkInDetail;
+
     private Boolean liftShiftByEquipment;
 
     private Boolean hazardousChemicalExposure;
@@ -53,13 +57,8 @@ public class PermitResponse {
     private LocalDate validOnDate;
 
     public String getFormattedValidOnDate() {
-        if (validOnDate == null) {
-            return "";
-        }
-
-        return validOnDate.format(
-                DateTimeFormatter.ofPattern("dd-MM-yyyy")
-        );
+        if (validOnDate == null) {return "";}
+        return validOnDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
     }
 
     @DateTimeFormat(pattern = "HH:mm")
@@ -71,4 +70,14 @@ public class PermitResponse {
     private PermitStatus status;
 
     private String currentStage;
+
+    private Boolean extensionRequestUsed;
+    private Boolean extensionUsed;
+    private Boolean extensionAccepted;
+
+    private String displayPermitNumber;
+
+    private LocalDateTime validTill;
+
+    private String validTillFormatted;
 }

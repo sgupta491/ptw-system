@@ -48,7 +48,7 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
             throw new RuntimeException("You are not authorized to assess this permit");
         }
 
-        if (permit.getPermitStatus()!= PermitStatus.ACCEPTOR_VERIFIED) {
+        if (permit.getPermitStatus()!= PermitStatus.PERMIT_ISSUED) {
             throw new RuntimeException("Permit is not ready for assessment");
         }
 
@@ -77,8 +77,8 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
 
             permit.setElectricalIsolationStatus(ElectricalIsolationStatus.NOT_REQUIRED);
             //permit.setIssuerApprovalDateTime(LocalDateTime.now());
-            permit.setPermitStatus(PermitStatus.ISSUER_APPROVAL);
-            permit.setCurrentStage("ISSUER_APPROVAL");
+           permit.setPermitStatus(PermitStatus.PERMIT_ISSUED);
+            permit.setCurrentStage("ASSESSMENT_COMPLETED");
 
         } else {
 
@@ -95,7 +95,7 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                         .statusAfterAction(savedPermit.getPermitStatus())
                         .stage(savedPermit.getCurrentStage())
                         .remarks(electricalIsolationRequired ? "Assessment completed. Electrical isolation required."
-                                        : "Assessment, post-work measures and issuer approval completed."
+                                        : "Sections C, D and E assessment completed."
                         )
                         .actionDateTime(LocalDateTime.now())
                         .build()
@@ -162,14 +162,20 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                                                     "Checklist not found: "+ checklistId
                                             ));
 
+                    String checklistResponseValue = responseRequest.getResponse();
+
                     PermitChecklistResponse response =  PermitChecklistResponse.builder()
                                     .permit(permit)
                                     .checklist(checklist)
                                     .questionCode(checklist.getQuestionCode())
                                     .questionText(checklist.getQuestionText())
                                     .response(responseRequest.getResponse())
-                                    .measureImplementedBy(issuer)
-                                    .measureImplementedAt(LocalDateTime.now())
+                                    .measureImplementedBy(checklistResponseValue != null && !checklistResponseValue.isBlank()
+                                            ? issuer
+                                            : null)
+                                    .measureImplementedAt(checklistResponseValue != null && !checklistResponseValue.isBlank()
+                                            ? LocalDateTime.now()
+                                            : null)
                                     .build();
 
 
@@ -291,6 +297,7 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                 .equipmentNumber(permit.getEquipmentNumber())
                 .location(permit.getLocation())
                 .proposedWork(permit.getProposedWork())
+                .proposedWorkInDetail(permit.getProposedWorkInDetail())
                 .liftShiftByEquipment(permit.getLiftShiftByEquipment())
                 .hazardousChemicalExposure(permit.getHazardousChemicalExposure())
                 .otherHazardActivity(permit.getOtherHazardActivity())

@@ -38,7 +38,7 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
         String extension = getExtension(originalFileName);
 
         if (!isAllowedExtension(extension)) {
-            throw new RuntimeException( "Only PDF, JPG, JPEG and PNG files are allowed");
+            throw new RuntimeException("Only PDF, JPG, JPEG, PNG, GIF, WEBP, DOC and DOCX files are allowed");
         }
 
         try {
@@ -78,6 +78,10 @@ public class DocumentStorageServiceImpl implements DocumentStorageService {
         return extension.equals(".pdf")
                 || extension.equals(".jpg")
                 || extension.equals(".jpeg")
-                || extension.equals(".png");
+                || extension.equals(".png")
+                || extension.equals(".gif")
+                || extension.equals(".webp")
+                || extension.equals(".doc")
+                || extension.equals(".docx");
     }
 }

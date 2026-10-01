@@ -103,32 +103,10 @@
                     <label class="form-label fw-semibold">Acceptor Name </label>
                     <div class="form-control bg-light"> ${permit.acceptorName}</div>
                 </div>
-    <!-- Contractor -->
-                <div class="col-md-6">
-                    <label class="form-label fw-semibold">Contractor Deployed</label>
-                    <div>
-                     <c:choose>
-                            <c:when test="${permit.contractorDeployed}">
-                                 <span class="badge bg-success"> Yes</span>
-                            </c:when>
-                            <c:otherwise>
-                                <span class="badge bg-secondary">
-                                    No
-                                </span>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </div>
-                <c:if test="${permit.contractorDeployed}">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold"> Contractor </label>
-                        <div class="form-control bg-light">${permit.contractorName} </div>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Supervisor Name</label>
-                        <div class="form-control bg-light">${permit.contractorSupervisor}</div>
-                    </div>
-                </c:if>
+                 <div class="col-12">
+                    <label class="form-label fw-semibold">Proposed Work</label>
+                     <div class="form-control bg-light" style="height:auto; min-height:100px;"> ${permit.proposedWork} </div>
+                 </div>
             </div>
         </div>
     </div>
@@ -150,9 +128,35 @@
                     <div class="form-control bg-light">${permit.location} </div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label fw-semibold">Proposed Work</label>
-                    <div class="form-control bg-light" style="height:auto; min-height:100px;"> ${permit.proposedWork} </div>
+                    <label class="form-label fw-semibold">Proposed Work in Detail</label>
+                    <div class="form-control bg-light" style="height:auto; min-height:100px;"> ${permit.proposedWorkInDetail} </div>
                 </div>
+                <!-- Contractor -->
+                 <div class="col-md-6">
+                    <label class="form-label fw-semibold">Contractor Deployed</label>
+                      <div>
+                        <c:choose>
+                            <c:when test="${permit.contractorDeployed}">
+                               <span class="badge bg-success"> Yes</span>
+                          </c:when>
+                            <c:otherwise>
+                              <span class="badge bg-secondary">
+                                 No
+                                 </span>
+                                 </c:otherwise>
+                                 </c:choose>
+                              </div>
+                                </div>
+                                <c:if test="${permit.contractorDeployed}">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold"> Contractor </label>
+                                        <div class="form-control bg-light">${permit.contractorName} </div>
+                                    </div>
+                                </c:if>
+                                 <div class="col-md-6">
+                                   <label class="form-label fw-semibold">Supervisor Name</label>
+                                    <div class="form-control bg-light">${permit.contractorSupervisor}</div>
+                                     </div>
                 <!-- Any Hazard Activity -->
                 <div class="col-12">
                     <label class="form-label fw-semibold">
@@ -378,23 +382,34 @@
                                  <!-- THIS IS THE HIDDEN CHECKLIST ID -->
                                  <input type="hidden" name="checklistResponses[${question.id}].checklistId"  value="${question.id}">
                                  </td>
-
-                                </td>
                                 <td class="text-center">
+                                 <div class="form-check d-flex justify-content-center align-items-center gap-1">
                                             <input type="radio"
                                                    class="form-check-input checklist-response"
                                                    name="checklistResponses[${question.id}].response"
                                                    value="YES"
-                                                   data-question-id="${question.id}">
-                                        </td>
+                                                   data-question-id="${question.id}"
+                                                   id="yes_${question.id}">
+                                                <label class="form-check-label mb-0" for="yes_${question.id}">
+                                                   Yes
+                                                 </label>
+                                    </div>
+                                  </td>
 
                                         <!-- NO -->
                                         <td class="text-center">
+                                          <div class="form-check d-flex justify-content-center align-items-center gap-1">
                                             <input type="radio"
                                                    class="form-check-input checklist-response"
                                                    name="checklistResponses[${question.id}].response"
                                                    value="NO"
-                                                   data-question-id="${question.id}">
+                                                   data-question-id="${question.id}"
+                                                    id="no_${question.id}">
+                                            <label class="form-check-label mb-0"
+                                                           for="no_${question.id}">
+                                                        No
+                                                    </label>
+                                                </div>
                                         </td>
 
                                         <!-- IMPLEMENTED SIGN -->
@@ -412,7 +427,7 @@
                                                 -
                                             </span>
                                         </td>
-                                </td>
+
                             </tr>
                         </c:otherwise>
                     </c:choose>
@@ -423,11 +438,11 @@
     </div>
 </div>
 
-<div id="electricalIsolationMessage" class="alert alert-warning mt-3" style="display:none;">
+<!--<div id="electricalIsolationMessage" class="alert alert-warning mt-3" style="display:none;">
     Electrical isolation is required.
     The permit will be forwarded to the
     Electrical Department for isolation and testing.
-</div>
+</div>  -->
 
 <!-- SECTION E -->
 
@@ -475,44 +490,9 @@
         </div>
     </div>
 </div>
-
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">
-            F - Approval of work permit
-            after verification of measures
-        </h5>
-    </div>
-    <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                    Approval Date &amp; Time
-                </label>
-                <div class="form-control bg-light">
-                    System generated on submission
-                </div>
-            </div>
-
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">
-                    Signature
-                </label>
-                <div class="form-control bg-light">
-                    Hardcopy Signature Required
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="text-muted">
-                    Permit Issuer:<strong> ${permit.issuerName} </strong>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="d-flex justify-content-end mt-4">
     <button type="submit" class="btn btn-success btn-lg">
-        Submit Assessment</button>
+       Save & Continue</button>
 </div>
 
 </form>

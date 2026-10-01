@@ -27,7 +27,6 @@ public class Permit {
     @Column(name = "permit_number", nullable = false, unique = true)
     private String permitNumber;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "permit_type_id", nullable = false)
     private PermitType permitType;
@@ -35,7 +34,6 @@ public class Permit {
     /*
      * Section A
      */
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "issuer_department_id")
     private Department issuerDepartment;
@@ -52,6 +50,7 @@ public class Permit {
     @JoinColumn(name = "user_acceptor_id")
     private User acceptor;
 
+    @Builder.Default
     @Column(name = "contractor_deployed", nullable = false)
     private Boolean contractorDeployed = false;
 
@@ -62,6 +61,8 @@ public class Permit {
     @Column(name = "contractor_supervisor")
     private String contractorSupervisor;
 
+    @Column(name = "proposed_work", columnDefinition = "TEXT")
+    private String proposedWork;
 
     /*
      * Section B
@@ -73,8 +74,8 @@ public class Permit {
     @Column(name= "location")
     private String location;
 
-    @Column(name = "proposed_work", columnDefinition = "TEXT")
-    private String proposedWork;
+    @Column(name = "proposed_work_in_detail", columnDefinition = "TEXT")
+    private String proposedWorkInDetail;
 
     @Column(name = "lift_shift_by_equipment")
     private Boolean liftShiftByEquipment;
@@ -100,7 +101,7 @@ public class Permit {
      */
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "permit_status", nullable = false)
     private PermitStatus permitStatus;
 
     @Column(name = "current_stage")
@@ -125,4 +126,29 @@ public class Permit {
 
     @Column(name = "issuer_approval_date_time")
     private LocalDateTime issuerApprovalDateTime;
+
+    @Column(name = "original_permit_number")
+    private String originalPermitNumber;
+
+    @Column(name = "original_valid_till")
+    private LocalDateTime originalValidTill;
+
+    @Column(name = "valid_till")
+    private LocalDateTime validTill;
+
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
+
+    @Builder.Default
+    @Column(name = "extension_used", nullable = false)
+    private Boolean extensionUsed = false;
+
+    @Builder.Default
+    @Column(name = "extension_request_used", nullable = false)
+    private Boolean extensionRequestUsed = false;
+
+    @Builder.Default
+    @Column(name = "extension_accepted", nullable = false)
+    private Boolean extensionAccepted = false;
+
 }

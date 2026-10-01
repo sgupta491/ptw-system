@@ -1,20 +1,27 @@
 package com.ptw.ptw.controller;
 
-import com.ptw.ptw.dto.AcceptorReviewRequest;
-import com.ptw.ptw.dto.PermitResponse;
-import com.ptw.ptw.dto.WorkCompletionRequest;
+import com.ptw.ptw.dto.*;
 import com.ptw.ptw.service.AcceptorPermitService;
+import com.ptw.ptw.service.ContractorService;
 import com.ptw.ptw.service.PermitService;
 import jakarta.validation.Valid;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Controller
@@ -24,6 +31,7 @@ public class AcceptorPermitController {
 
     private final AcceptorPermitService acceptorPermitService;
     private final PermitService permitService;
+    private final ContractorService contractorService;
 
     @GetMapping
     public String pendingPermits(Authentication authentication, Model model) {
@@ -38,71 +46,121 @@ public class AcceptorPermitController {
     {
         PermitResponse response =  acceptorPermitService.findPermitForAcceptor(id,authentication.getName());
          model.addAttribute("permit", response);
-         model.addAttribute("reviewRequest", new AcceptorReviewRequest());
+        model.addAttribute("sectionBRequest", new PermitSectionBRequest());
+        model.addAttribute("contractors",contractorService.findAll());
 
          return "acceptor/permit-review";
     }
 
-    @PostMapping("/{id}/review")
-    public String reviewPermit(@PathVariable Long id, @Valid @ModelAttribute("reviewRequest") AcceptorReviewRequest request,
-                               BindingResult bindingResult, Authentication authentication, Model model)
-    {
+    @PostMapping("/{id}/section-b")
+    public String submitSectionB(@PathVariable Long id, @Valid @ModelAttribute("sectionBRequest") PermitSectionBRequest request,
+                            BindingResult bindingResult, Authentication authentication, Model model) {
 
-            if(bindingResult.hasErrors())
-            {
-                model.addAttribute("permit", acceptorPermitService.findPermitForAcceptor
-                        (id,authentication.getName()));
-
-                return "acceptor/permit-review";
-            };
-
-            try{
-                acceptorPermitService.reviewPermit(id, request, authentication.getName());
-
-                return "redirect:/acceptor/permits";
-            }
-            catch(RuntimeException e)
-            {
-                model.addAttribute(("error"), e.getMessage());
-                model.addAttribute("permit", acceptorPermitService.findPermitForAcceptor
-                    (id,authentication.getName()));
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("permit",acceptorPermitService.findPermitForAcceptor(id,authentication.getName())
+            );
             return "acceptor/permit-review";
+        }
+        try {
+            acceptorPermitService.submitSectionB(id,request, authentication.getName());
+            return "redirect:/acceptor/permits";
 
-            }
+        } catch (RuntimeException e) {
+
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("permit", acceptorPermitService.findPermitForAcceptor( id, authentication.getName()));
+            model.addAttribute("contractors",contractorService.findAll());
+            return "acceptor/permit-review";
+        }
     }
 
-    @GetMapping("/{id}/start-work")
-    public String startWorkPage(@PathVariable Long id, Authentication authentication, Model model) {
 
-        PermitResponse permit =permitService.getPermitForAcceptance(id,authentication.getName());
+    @GetMapping("/{id}/documents")
+    public String documentsPage(@PathVariable Long id, Authentication authentication, Model model) {
+
+        List<PermitDocumentViewResponse> documents = acceptorPermitService.getDocuments(id, authentication.getName());
+        PermitResponse permit = acceptorPermitService.findPermitForDocumentUpload(id, authentication.getName());
+
         model.addAttribute("permit", permit);
+        model.addAttribute("documents", documents);
 
-        return "acceptor/start-work";
+        return "acceptor/permit-documents";
     }
 
-    @PostMapping("/{id}/start-work")
-    public String startWork(@PathVariable Long id,Authentication authentication) {
-        permitService.acceptPermitAndStartWork(id,authentication.getName());
 
+    @PostMapping("/{id}/documents")
+    public String uploadDocument(@PathVariable Long id, @RequestParam("documentType") String documentType,
+            @RequestParam("file") MultipartFile file, Authentication authentication, RedirectAttributes redirectAttributes) {
+        try {
+
+            acceptorPermitService.uploadDocument(id, documentType, file, authentication.getName());
+            redirectAttributes.addFlashAttribute("success","Document uploaded successfully.");
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error",e.getMessage()
+            );
+        }
+        return "redirect:/acceptor/permits/" + id + "/documents";
+    }
+
+
+    @GetMapping("/{id}/documents/{documentId}")
+    public ResponseEntity<Resource> viewDocument(@PathVariable Long id, @PathVariable Long documentId,
+            Authentication authentication) {
+
+        Resource resource = permitService.getPermitDocument(id, documentId,authentication.getName());
+        String contentType = "application/octet-stream";
+
+        try {
+            contentType = Files.probeContentType(Paths.get(resource.getFile().getAbsolutePath()));
+        } catch (Exception ignored) {
+        }
+
+        MediaType mediaType;
+
+        try {
+            mediaType = MediaType.parseMediaType(contentType);
+        } catch (Exception e) {
+            mediaType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return ResponseEntity.ok()
+                .contentType(mediaType)
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + resource.getFilename() + "\""
+                )
+                .body(resource);
+    }
+
+
+    @PostMapping("/{id}/close")
+    public String closePermit(@PathVariable Long id, @RequestParam LocalDate validTillDate, @RequestParam LocalTime validTillTime,
+                              Authentication authentication, RedirectAttributes redirectAttributes) {
+
+        try {
+                acceptorPermitService.closePermit(id, validTillDate, validTillTime, authentication.getName());
+                redirectAttributes.addFlashAttribute("success","Permit closed successfully.");
+                 return "redirect:/acceptor/permits";
+
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error",e.getMessage());
+            return "redirect:/acceptor/permits/"+ id+ "/documents";
+        }
+
+    }
+
+    @PostMapping("/{id}/extension-request")
+    public String requestExtension(@PathVariable Long id,Authentication authentication,RedirectAttributes redirectAttributes) {
+
+        try {
+            acceptorPermitService.requestExtension(id,authentication.getName());
+            redirectAttributes.addFlashAttribute("success","Extension request sent to the Issuer.");
+
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error",e.getMessage());
+        }
         return "redirect:/acceptor/permits";
     }
 
-    @GetMapping("/{id}/completion")
-    public String workCompletionPage(@PathVariable Long id, Authentication authentication,Model model) {
-
-        PermitResponse permit = permitService.getPermitForWorkCompletion(id,authentication.getName());
-        model.addAttribute("permit", permit);
-
-        return "acceptor/permit-work-completion";
-    }
-
-    @PostMapping("/{id}/completion")
-    public String submitWorkCompletion(@PathVariable Long id, @ModelAttribute WorkCompletionRequest request,
-                                       @RequestParam(value = "documents", required = false)
-                                       List<MultipartFile> documents, Authentication authentication) {
-
-        permitService.submitWorkCompletion(id,request, documents, authentication.getName());
-        return "redirect:/acceptor/permits";
-    }
 
 }

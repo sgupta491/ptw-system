@@ -1,0 +1,183 @@
+       * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f5f5;
+            color: #000;
+        }
+
+        .page {
+            width: 100%;
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            padding: 25px;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .permit-number {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            background: #000;
+            color: #fff;
+            padding: 6px 10px;
+            margin-top: 15px;
+        }
+
+        .section-subtitle {
+            font-size: 15px;
+            font-weight: bold;
+            margin: 15px 0 8px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .info-table td {
+            border: 1px solid #000;
+            padding: 7px 8px;
+            vertical-align: middle;
+            font-size: 13px;
+        }
+
+        .label-cell {
+            width: 25%;
+            background: #e9e9e9;
+            font-weight: bold;
+        }
+
+        .value-cell {
+            width: 25%;
+        }
+
+        .original-b-note {
+            margin: 14px 0 8px;
+            padding: 8px;
+            text-align: center;
+            font-style: italic;
+            font-weight: bold;
+            background: #efefef;
+            border: 1px solid #aaa;
+        }
+
+        .extension-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .extension-table col.label-col {
+            width: 25%;
+        }
+
+        .extension-table col.day-col {
+            width: 10.714%;
+        }
+
+        .extension-table td {
+            border: 1px solid #000;
+            padding: 6px;
+            vertical-align: middle;
+            font-size: 12px;
+            height: 55px;
+        }
+
+        .extension-table td:first-child {
+            font-weight: 700;
+        }
+
+        .blank-cell {
+            height: 55px;
+        }
+
+        .button-area {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #0d6efd;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: #fff;
+        }
+
+        .print-note {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        @media print {
+
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+
+            body {
+                padding: 0;
+                background: #fff;
+            }
+
+            .page {
+                max-width: none;
+                padding: 0;
+            }
+
+            .button-area,
+            .print-note {
+                display: none !important;
+            }
+
+            .section-title {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+            .original-b-note {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+
+        }

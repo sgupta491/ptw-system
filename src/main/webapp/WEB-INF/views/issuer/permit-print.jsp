@@ -175,6 +175,24 @@
                 break-inside: avoid;
             }
 
+             /* Safety Briefing always starts on a new printed page */
+                .safety-briefing-page {
+                    page-break-before: always;
+                    break-before: page;
+                }
+
+                .safety-briefing-page table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+
+                .safety-briefing-page th,
+                .safety-briefing-page td {
+                    border: 1px solid #000;
+                    padding: 6px;
+                    vertical-align: middle;
+                }
+
         }
 
     </style>
@@ -191,7 +209,7 @@
 
     <div class="permit-title">
 
-        <h1>COLD WORK PERMIT</h1>
+        <h1>${approval.permit.permitType}</h1>
 
         <div class="permit-number">
             Permit Number:
@@ -242,24 +260,12 @@
                     </span>
                     ${approval.permit.acceptorName}
                 </div>
-
-                <c:if test="${approval.permit.contractorDeployed}">
-
-                    <div class="field">
-                        <span class="field-label">
-                            Contractor:
-                        </span>
-                        ${approval.permit.contractorName}
-                    </div>
-
-                    <div class="field">
-                        <span class="field-label">
-                            Supervisor:
-                        </span>
-                        ${approval.permit.contractorSupervisor}
-                    </div>
-
-                </c:if>
+              <div class="field" style="grid-column: 1 / -1;">
+                  <span class="field-label">Proposed Work:</span>
+                  <div class="proposed-work">
+                      ${approval.permit.proposedWork}
+                  </div>
+              </div>
 
             </div>
 
@@ -299,15 +305,54 @@
             </div>
 
             <div class="field" style="margin-top:10px;">
-
                 <div class="field-label">
-                    Proposed Work:
+                    Proposed Work in Detail:
                 </div>
 
                 <div class="proposed-work">
-                    ${approval.permit.proposedWork}
+                    ${approval.permit.proposedWorkInDetail}
                 </div>
+            </div>
 
+             <c:if test="${approval.permit.contractorDeployed}">
+                  <div class="field">
+                  <span class="field-label">
+                     Contractor:
+                   </span>
+                   ${approval.permit.contractorName}
+                 </div>
+              </c:if>
+
+              <div class="field">
+                 <span class="field-label">
+                    Supervisor:
+                 </span>
+                  ${approval.permit.contractorSupervisor}
+               </div>
+
+            <div class="field" style="margin-top:10px;">
+                <span class="field-label">Any Hazard Activity:</span>
+
+                <c:if test="${approval.permit.liftShiftByEquipment}">
+                    <div>✓ Lift &amp; shift by equipment</div>
+                </c:if>
+
+                <c:if test="${approval.permit.hazardousChemicalExposure}">
+                    <div>✓ Exposure to hazardous chemical</div>
+                </c:if>
+
+                <c:if test="${not empty approval.permit.otherHazardActivity}">
+                    <div>
+                        ✓ Any other:
+                        ${approval.permit.otherHazardActivity}
+                    </div>
+                </c:if>
+
+                <c:if test="${not approval.permit.liftShiftByEquipment
+                            and not approval.permit.hazardousChemicalExposure
+                            and empty approval.permit.otherHazardActivity}">
+                    <div>-</div>
+                </c:if>
             </div>
 
             <div class="field" style="margin-top:10px;">
@@ -860,6 +905,173 @@
         </div>
 
     </div>
+
+    <!-- ===================================================== -->
+    <!-- SECTION H -->
+    <!-- ===================================================== -->
+
+    <div class="section">
+
+        <div class="section-title">
+            H - Completion Report by the Person Completing the Work to the issuer dept.
+        </div>
+
+        <div class="section-body" style="padding:0;">
+
+            <table>
+
+                <tr>
+                    <td colspan="4">
+                        The proposed work as given in the description has been completed:
+                        <strong>☐ Yes</strong>
+                        &nbsp;&nbsp;
+                        <strong>☐ No</strong>
+                    </td>
+                </tr>
+
+                <tr>
+
+                    <td style="width:25%;">
+                        Date: ____________________
+                    </td>
+
+                    <td style="width:25%;">
+                        Sign.: ____________________
+                    </td>
+
+                    <td style="width:25%;">
+                        Date: ____________________
+                    </td>
+
+                    <td style="width:25%;">
+                        Sign.: ____________________
+                    </td>
+
+                </tr>
+
+                <tr>
+
+                    <td colspan="2" style="font-size:11px;">
+                        (Permit Acceptor / executor)
+                    </td>
+
+                    <td colspan="2" style="font-size:11px;">
+                        Supervisor of the contractor
+                    </td>
+
+                </tr>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- SECTION I -->
+    <!-- ===================================================== -->
+
+    <div class="section">
+
+        <div class="section-title">
+            I - Acceptance Check and withdrawal of pre-check conditions
+            (lifting safety measures)
+        </div>
+
+        <div class="section-body" style="padding:0;">
+
+            <table>
+
+                <tr>
+
+                    <td style="width:30%;">
+                        Date and signature of issuer
+                        <br><br>
+                        ______________________________
+                    </td>
+
+                    <td style="width:40%;">
+                        Remarks if any :
+                        <br><br>
+                        ______________________________
+                    </td>
+
+                    <td style="width:30%;">
+                        &nbsp;
+                    </td>
+
+                </tr>
+
+            </table>
+
+        </div>
+
+    </div>
+
+      <!-- ===================================================== -->
+        <!-- SAFETY BRIEFING -->
+        <!-- ===================================================== -->
+
+        <div class="safety-briefing-page">
+
+            <div style="
+                border:1px solid #000;
+                padding:6px;
+                font-size:16px;
+                font-weight:bold;
+                background:#d9e6c3;
+            ">
+                Attachment: Safety Briefing Record for Workers put on the job
+            </div>
+
+            <div style="
+                border-left:1px solid #000;
+                border-right:1px solid #000;
+                border-bottom:1px solid #000;
+                padding:10px;
+                font-size:13px;
+            ">
+                Following workmen put on the job are explained about hazards involved
+                with work place &amp; precautions to be taken while performing the job.
+            </div>
+
+            <table style="width:100%; border-collapse:collapse;">
+
+                <thead>
+                <tr>
+                    <th style="width:16%;">
+                        Name
+                    </th>
+                    <th style="width:15%;">
+                        Date
+                    </th>
+                    <th style="width:15%;">
+                        Time
+                    </th>
+                    <th style="width:26%;">
+                        Authorized workers<br>
+                        (Signature)
+                    </th>
+                    <th style="width:28%;">
+                        Safety briefing provided by<br>
+                        (Signature) supervisor of the<br>
+                        contractor if any
+                    </th>
+                </tr>
+                </thead>
+                <tbody>
+                <c:forEach var="i" begin="1" end="12">
+                    <tr style="height:34px;">
+                        <td></td>
+                        <td style="text-align:center;">&nbsp;&nbsp;/&nbsp;&nbsp;&nbsp;/&nbsp;&nbsp;</td>
+                        <td style="text-align:center;">&nbsp;&nbsp;:</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </c:forEach>
+                </tbody>
+            </table>
+        </div>
 
 </div>
 
