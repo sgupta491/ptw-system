@@ -1,5 +1,6 @@
 package com.ptw.ptw.dto;
 
+import com.ptw.ptw.enums.ElectricalIsolationStatus;
 import com.ptw.ptw.enums.PermitStatus;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -80,4 +81,7 @@ public class PermitResponse {
     private LocalDateTime validTill;
 
     private String validTillFormatted;
+
+    private ElectricalIsolationStatus electricalIsolationStatus;
+    private Boolean electricalIsolationRequired;
 }

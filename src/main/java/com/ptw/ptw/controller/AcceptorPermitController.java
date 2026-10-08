@@ -54,7 +54,7 @@ public class AcceptorPermitController {
 
     @PostMapping("/{id}/section-b")
     public String submitSectionB(@PathVariable Long id, @Valid @ModelAttribute("sectionBRequest") PermitSectionBRequest request,
-                            BindingResult bindingResult, Authentication authentication, Model model) {
+                            BindingResult bindingResult, Authentication authentication, Model model,  RedirectAttributes redirectAttributes) {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("permit",acceptorPermitService.findPermitForAcceptor(id,authentication.getName())
@@ -63,6 +63,7 @@ public class AcceptorPermitController {
         }
         try {
             acceptorPermitService.submitSectionB(id,request, authentication.getName());
+            redirectAttributes.addFlashAttribute("successMessage","Permit issued successfully.");
             return "redirect:/acceptor/permits";
 
         } catch (RuntimeException e) {
@@ -70,6 +71,7 @@ public class AcceptorPermitController {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("permit", acceptorPermitService.findPermitForAcceptor( id, authentication.getName()));
             model.addAttribute("contractors",contractorService.findAll());
+            redirectAttributes.addFlashAttribute("errorMessage","Failed to complete Section B.");
             return "acceptor/permit-review";
         }
     }

@@ -17,6 +17,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -52,14 +56,11 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
             throw new RuntimeException("Permit is not ready for assessment");
         }
 
-
         saveHazards(permit,request);
         permit.setOtherHazards(request.getOtherHazards());
         permit.setRelatedPermitNumber(request.getRelatedPermitNumber());
-
         saveChecklistResponses(permit,request,issuer);
         savePostWorkMeasures(permit,request,issuer);
-
 
         boolean electricalIsolationRequired = isElectricalIsolationRequired(request);
 
@@ -95,13 +96,79 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                         .statusAfterAction(savedPermit.getPermitStatus())
                         .stage(savedPermit.getCurrentStage())
                         .remarks(electricalIsolationRequired ? "Assessment completed. Electrical isolation required."
-                                        : "Sections C, D and E assessment completed."
+                         : "Sections C, D and E assessment completed."
                         )
                         .actionDateTime(LocalDateTime.now())
                         .build()
         );
         return mapToResponse(savedPermit);
     }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public PermitAssessmentRequest getExistingAssessment(Long permitId,String username) {
+
+        User issuer = userRepository.findByUsername(username)
+                .orElseThrow(() ->new RuntimeException("Issuer not found"));
+
+        Permit permit = permitRepository.findById(permitId)
+                .orElseThrow(() ->new RuntimeException("Permit not found"));
+
+        if (permit.getIssuer() == null || !permit.getIssuer().getId().equals(issuer.getId())) {
+            throw new RuntimeException("You are not authorized to view this assessment");
+        }
+
+        List<Long> hazardIds = permitHazardRepository.findByPermit(permit)
+                        .stream()
+                        .map(permitHazard ->permitHazard.getHazard().getId())
+                        .toList();
+
+
+        Map<Long, ChecklistResponseRequest> checklistResponses = new java.util.LinkedHashMap<>();
+
+        List<PermitChecklistResponse> savedResponses = checklistResponseRepository.findByPermit(permit);
+
+        for (PermitChecklistResponse response : savedResponses) {
+            Long checklistId = response.getChecklist().getId();
+
+            Map<Long, String> fieldValues = new java.util.LinkedHashMap<>();
+
+            List<PermitChecklistResponseField> savedFields = checklistResponseFieldRepository.findByResponse(response);
+
+            for (PermitChecklistResponseField field : savedFields) {
+                fieldValues.put(field.getField().getId(),field.getFieldValue()
+                );
+            }
+
+            ChecklistResponseRequest responseRequest = ChecklistResponseRequest.builder()
+                                                        .checklistId(checklistId)
+                                                        .response(response.getResponse())
+                                                        .fieldValues(fieldValues)
+                                                        .build();
+
+            checklistResponses.put(checklistId,responseRequest);
+        }
+
+        List<PostWorkMeasureRequest> postWorkMeasures = new java.util.ArrayList<>();
+
+        postWorkMeasureRepository.findByPermit(permit).forEach(measure -> {
+                    postWorkMeasures.add(PostWorkMeasureRequest.builder()
+                                    .itemCode(measure.getItemCode())
+                                    .response(measure.getResponse())
+                                    .otherText(measure.getOtherText())
+                                    .build());
+        });
+
+        return PermitAssessmentRequest.builder()
+                .hazardIds(hazardIds)
+                .otherHazards(permit.getOtherHazards())
+                .relatedPermitNumber(permit.getRelatedPermitNumber())
+                .checklistResponses(checklistResponses)
+                .postWorkMeasures(postWorkMeasures)
+                .build();
+    }
+
 
 
     private void saveHazards(Permit permit, PermitAssessmentRequest request) {
@@ -118,7 +185,6 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                 .forEach(hazardId -> {
                     HazardMaster hazard = hazardMasterRepository
                                     .findById(hazardId).orElseThrow(() ->new RuntimeException("Hazard not found: " + hazardId));
-
                     PermitHazard permitHazard = PermitHazard.builder()
                                     .permit(permit)
                                     .hazard(hazard)
@@ -163,7 +229,6 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                                             ));
 
                     String checklistResponseValue = responseRequest.getResponse();
-
                     PermitChecklistResponse response =  PermitChecklistResponse.builder()
                                     .permit(permit)
                                     .checklist(checklist)
@@ -196,7 +261,6 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                                 ChecklistFieldMaster field = checklistFieldMasterRepository
                                                 .findById(fieldId)
                                                 .orElseThrow(() ->new RuntimeException("Checklist field not found: " + fieldId));
-
                                 PermitChecklistResponseField responseField = PermitChecklistResponseField.builder()
                                                 .response(savedResponse)
                                                 .field(field)
@@ -231,7 +295,7 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                 continue;
             }
 
-            if ("D-3".equals(checklist.getQuestionCode()
+            if ("3".equals(checklist.getQuestionCode()
             )) {
                 return "YES".equalsIgnoreCase(
                         response.getResponse()
@@ -306,6 +370,7 @@ public class PermitAssessmentServiceImpl implements PermitAssessmentService {
                 .timeTo(permit.getTimeTo())
                 .status(permit.getPermitStatus())
                 .currentStage(permit.getCurrentStage())
+                .electricalIsolationStatus(permit.getElectricalIsolationStatus())
                 .build();
     }
 }

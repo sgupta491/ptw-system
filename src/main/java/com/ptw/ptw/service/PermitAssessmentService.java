@@ -7,4 +7,6 @@ public interface PermitAssessmentService {
 
     PermitResponse saveAssessment(Long permitId, PermitAssessmentRequest request,
             String username);
+
+    PermitAssessmentRequest getExistingAssessment(Long permitId, String username);
 }

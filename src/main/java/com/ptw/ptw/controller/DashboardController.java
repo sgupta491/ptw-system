@@ -29,8 +29,8 @@ public class DashboardController {
             return "redirect:/acceptor/permits";
         }
 
-        if ("ROLE_ELECTRICIAN".equals(role)) {
-            return "redirect:/electrician/dashboard";
+        if ("ROLE_MAINTENANCE".equals(role)) {
+            return "redirect:/maintenance/work-orders";
         }
 
         if ("ROLE_CONTRACTOR".equals(role)) {

@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>My Permits</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <jsp:include page="/WEB-INF/views/common/toast.jsp"/>
 </head>
 
 <body class="bg-light">
@@ -65,6 +66,7 @@
                                 <th> Status </th>
                                 <th class="text-center">  Action</th>
                                  <th>View Documents</th>
+                                 <th class="text-center">Work Request</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -105,20 +107,13 @@
                                             </a>
                                         </c:if>
                                         <!-- Acceptor completed Section B -->
-                                        <c:if test="${permit.status == 'PERMIT_ISSUED'}">
+                                        <c:if test="${permit.status == 'PERMIT_ISSUED' || permit.status == 'ELECTRICAL_ISOLATION'}">
                                             <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}/assessment"
                                                     class="btn btn-sm btn-success">
                                                 Assessement
                                             </a>
                                         </c:if>
 
-                                        <!-- Electrical -->
-                                        <c:if test="${permit.status == 'ELECTRICAL_ISOLATION'}">
-                                            <a   href="${pageContext.request.contextPath}/issuer/permits/${permit.id}"
-                                                    class="btn btn-sm btn-warning">
-                                                View
-                                            </a>
-                                        </c:if>
                                         <!-- Work in progress -->
                                         <c:if test="${permit.status == 'WORK_IN_PROGRESS' || (permit.status == 'EXTENDED' && permit.extensionUsed) }">
                                             <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}"
@@ -183,6 +178,23 @@
                                         <c:if test="${permit.status != 'CLOSED'}">
                                             <span class="text-muted">—</span>
                                         </c:if>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <c:choose>
+                                            <c:when test="${permit.electricalIsolationRequired}">
+                                            <a href="${pageContext.request.contextPath}/issuer/permits/${permit.id}/work-request"
+                                                   class="btn btn-sm btn-outline-warning">
+                                                    View Work Request
+                                                </a>
+                                            </c:when>
+                                            <c:otherwise>
+                                                <span class="text-muted">
+                                                    —
+                                                </span>
+                                            </c:otherwise>
+                                        </c:choose>
+
                                     </td>
                                 </tr>
                             </c:forEach>

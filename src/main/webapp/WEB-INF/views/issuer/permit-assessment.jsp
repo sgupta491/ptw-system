@@ -223,7 +223,15 @@
                             <c:if test="${hazard.hazardCategory  == 'EQUIPMENT_INSTALLATION'}">
                               <div class="col-md-4 mb-2">
                                 <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" name="hazardIds" value="${hazard.id}" id="hazard_${hazard.id}">
+                                    <input type="checkbox" class="form-check-input"
+                                    name="hazardIds" value="${hazard.id}" id="hazard_${hazard.id}"
+                                     <c:if test="${assessmentRequest.hazardIds != null
+                                       and assessmentRequest.hazardIds.contains(hazard.id)}">
+                                               checked
+                                           </c:if>
+                                       <c:if test="${assessmentReadOnly}">
+                                               disabled
+                                           </c:if>>
                                     <label class="form-check-label" for="hazard_${hazard.id}">
                                         ${hazard.hazardName}
                                     </label>
@@ -244,7 +252,14 @@
                                 <div class="col-md-4 mb-2">
                                   <div class="form-check">
                                     <input type="checkbox" class="form-check-input" name="hazardIds"
-                                            value="${hazard.id}" id="hazard_${hazard.id}">
+                                     value="${hazard.id}" id="hazard_${hazard.id}"
+                                      <c:if test="${assessmentRequest.hazardIds != null
+                                        and assessmentRequest.hazardIds.contains(hazard.id)}">
+                                          checked
+                                          </c:if>
+                                           <c:if test="${assessmentReadOnly}">
+                                              disabled
+                                            </c:if>>
                                     <label class="form-check-label" for="hazard_${hazard.id}">
                                         ${hazard.hazardName}
                                     </label>
@@ -259,7 +274,8 @@
                 <div class="col-md-6">
                     <label class="form-label fw-semibold">Other hazards:
                     </label>
-                    <input type="text" name="otherHazards" class="form-control">
+                    <input type="text" name="otherHazards" class="form-control" value="${assessmentRequest.otherHazards}"
+                      <c:if test="${assessmentReadOnly}">readonly</c:if>>
                 </div>
                 <!-- RELATED PERMIT -->
                 <div class="col-md-6">
@@ -267,7 +283,11 @@
                         Other hazards in accordance
                         with Permit No:
                     </label>
-                    <input type="text" name="relatedPermitNumber" class="form-control">
+                    <input type="text" name="relatedPermitNumber" class="form-control"
+                     value="${assessmentRequest.relatedPermitNumber}"
+                           <c:if test="${assessmentReadOnly}">
+                               readonly
+                           </c:if>>
                 </div>
             </div>
         </div>
@@ -275,6 +295,15 @@
 
      <!-- SECTION D -->
 
+<div id="electricalIsolationMessage" class="alert alert-warning mt-3" style="display:none;">
+    <div class="fw-bold mb-1">
+        Electrical Isolation Required
+    </div>
+    <div>
+        Electrical isolation is required for this permit.
+        Please save the assessment and create the Electrical Work Request.
+    </div>
+</div>
 
 <div class="card shadow-sm mb-4">
     <div class="card-header bg-primary text-white">
@@ -297,22 +326,183 @@
                 <tbody>
                 <c:forEach items="${checklistQuestions}" var="question">
                     <c:choose>
-                        <c:when test="${question.itemType == 'HEADER'}">
-                            <tr class="checklist-section-header">
-                                <td colspan="5">
-                                    <strong>${question.questionCode}</strong>
-                                    &nbsp;
-                                    ${question.questionText}
-                                </td>
-                            </tr>
-                        </c:when>
+                       <c:when test="${question.itemType == 'HEADER'}">
+                           <c:choose>
+                               <c:when test="${question.questionCode == '3'}">
+                                   <tr class="checklist-section-header">
+                                       <td>
+                                           <div>
+                                               <strong>${question.questionCode}</strong>
+                                               &nbsp;
+                                               <strong>Making Electrical isolation safe</strong>
+                                           </div>
+                                           <div class="mt-2">
+                                               <strong>Electrical Isolation Required</strong>
+                                           </div>
+
+                                           <c:if test="${not empty workRequest}">
+                                              <c:choose>
+                                                   <c:when test="${permit.electricalIsolationStatus == 'PENDING'}">
+                                                       <div class="alert alert-warning mt-3 mb-0">
+                                                        <div class="fw-bold">
+                                                          Electrical Isolation Pending
+                                                            </div>
+                                                        <div class="small mt-1">
+                                                        Work Order:
+                                                        <strong>${workRequest.woNumber}</strong>
+                                                        </div>
+                                                        <div class="small">
+                                                        Maintenance work is pending.
+                                                        Permit cannot be printed until isolation is completed.
+                                                     </div>
+                                                     </div>
+                                                     </c:when>
+                                                        <c:when test="${permit.electricalIsolationStatus == 'COMPLETED'}">
+                                                          <div class="alert alert-success mt-3 mb-0">
+                                                            <div class="fw-bold mb-2">
+                                                              Electrical Isolation Completed
+                                                               </div>
+                                                                <div class="row g-2">
+                                                                   <div class="col-md-4">
+                                                                     <strong>WO No:</strong>
+                                                                      ${workRequest.woNumber}
+                                                                    </div>
+                                                                    <div class="col-md-4">
+                                                                      <strong>Equipment No:</strong>
+                                                                      ${workRequest.isolationEquipmentNumber}
+                                                                     </div>
+                                                                    <div class="col-md-4">
+                                                                      <strong>Feeder No:</strong>
+                                                                       ${workRequest.feederNumber}
+                                                                     </div>
+                                                                      <div class="col-md-4">
+                                                                         <strong>LOTO No:</strong>
+                                                                          ${workRequest.lotoNumber}
+                                                                          </div>
+                                                                         <div class="col-md-4">
+                                                                         <strong>Completed By:</strong>
+                                                                         ${workRequest.workCompletedBy}
+                                                                         </div>
+                                                                     <div class="col-md-4">
+                                                                         <strong>Completed At:</strong>
+                                                                        ${workRequest.completedAt}
+                                                                     </div>
+                                                           </div>
+                                                          </div>
+                                                        </c:when>
+                                                   </c:choose>
+                                           </c:if>
+
+                                           <input type="hidden"  name="checklistResponses[${question.id}].checklistId" value="${question.id}">
+                                       </td>
+                                       <td class="text-center">
+                                           <div class="form-check d-flex justify-content-center align-items-center gap-1">
+                                               <input type="radio" class="form-check-input checklist-response"
+                                               name="checklistResponses[${question.id}].response" value="YES"
+                                               data-question-id="${question.id}" data-question-code="${question.questionCode}"
+                                               id="yes_${question.id}"
+                                               <c:if test="${assessmentRequest.checklistResponses[question.id].response == 'YES'}">
+                                                  checked
+                                                </c:if>
+                                                <c:if test="${assessmentReadOnly}">
+                                                  disabled
+                                                 </c:if>>
+                                               <label class="form-check-label mb-0"
+                                                      for="yes_${question.id}">
+                                                   Yes
+                                               </label>
+                                           </div>
+
+                                       </td>
+                                       <!-- NO -->
+                                       <td class="text-center">
+                                           <div class="form-check d-flex justify-content-center align-items-center gap-1">
+                                               <input type="radio" class="form-check-input checklist-response"
+                                                name="checklistResponses[${question.id}].response"
+                                                value="NO" data-question-id="${question.id}"
+                                                data-question-code="${question.questionCode}" id="no_${question.id}"
+                                                 <c:if test="${assessmentRequest.checklistResponses[question.id].response == 'NO'}">
+                                                   checked
+                                                  </c:if>
+                                                  <c:if test="${assessmentReadOnly}">
+                                                     disabled
+                                                   </c:if>>
+                                               <label class="form-check-label mb-0"
+                                                      for="no_${question.id}">
+                                                   No
+                                               </label>
+                                           </div>
+                                       </td>
+                                       <td class="text-center">
+                                           <span id="implementedSign_${question.id}"
+                                                 class="implemented-sign text-muted">
+                                               -
+                                           </span>
+                                       </td>
+                                       <td class="text-center">
+                                           <span id="liftedSign_${question.id}"
+                                                 class="lifted-sign text-muted">
+                                               -
+                                           </span>
+                                       </td>
+                                   </tr>
+                               </c:when>
+                               <c:otherwise>
+                                   <tr class="checklist-section-header">
+                                       <td colspan="5">
+                                           <strong>${question.questionCode}</strong>
+                                           &nbsp;
+                                           ${question.questionText}
+                                       </td>
+                                   </tr>
+                               </c:otherwise>
+                           </c:choose>
+                       </c:when>
                         <c:otherwise>
                             <tr>
-                                <td> <div class="mb-1">
-                                        <strong> ${question.questionCode} </strong>
-                                        &nbsp;
-                                        ${question.questionText}
-                                    </div>
+                                <td>
+                                <c:choose>
+                                    <c:when test="${checklist.questionCode == '3.1'}">
+                                        <div class="mb-2">
+                                            <strong>3.1</strong>
+                                            &nbsp;
+                                            Deactivate power supply and testing
+                                        </div>
+                                        <div class="border rounded p-3 bg-light">
+                                            <div class="mb-2">
+                                                <strong>Work Order No:</strong>
+                                                ${workRequest.woNumber}
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Equipment No:</strong>
+                                                ${workRequest.isolationEquipmentNumber}
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>Feeder No:</strong>
+                                                ${workRequest.feederNumber}
+                                            </div>
+                                            <div class="mb-2">
+                                                <strong>LOTO Tag No:</strong>
+                                                ${workRequest.lotoNumber}
+                                            </div>
+                                            <div class="mt-3">
+                                                <strong>
+                                                    Name &amp; signature of electrician:
+                                                </strong>
+                                                <div style=" margin-top:12px; width:80%;
+                                                    border-bottom:1px solid #000; height:30px; ">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </c:when>
+                                    <c:otherwise>
+                                        <div class="mb-1">
+                                            <strong>${question.questionCode}</strong>
+                                            &nbsp;
+                                            ${question.questionText}
+                                        </div>
+                                    </c:otherwise>
+                                </c:choose>
                                  <c:if test="${not empty question.fields}">
                                      <div class="mt-2">
                                          <c:forEach items="${question.fields}" var="field">
@@ -321,32 +511,32 @@
                                                  <div class="col-md-4">
                                                      <label class="form-label mb-1">
                                                          ${field.fieldLabel}
-
                                                          <c:if test="${field.required}">
                                                              <span class="text-danger">*</span>
                                                          </c:if>
                                                      </label>
                                                  </div>
-
                                                  <div class="col-md-8">
-
                                                      <c:choose>
-
                                                          <c:when test="${field.fieldType == 'TEXT'}">
-                                                             <input type="text"
-                                                                    class="form-control form-control-sm"
-                                                                    name="checklistResponses[${question.id}].fieldValues[${field.id}]"
-                                                                    <c:if test="${field.required}">
-                                                                        required
-                                                                    </c:if>>
+                                                             <input type="text" class="form-control form-control-sm"
+                                                             name="checklistResponses[${question.id}].fieldValues[${field.id}]"
+                                                               <c:if test="${field.required}"> required</c:if>
+                                                              value="${assessmentRequest.checklistResponses[question.id].fieldValues[field.id]}"
+                                                               <c:if test="${assessmentReadOnly}">
+                                                                 readonly
+                                                                 </c:if>>
                                                          </c:when>
-
                                                          <c:when test="${field.fieldType == 'NUMBER'}">
                                                              <input type="number"
                                                                     class="form-control form-control-sm"
                                                                     name="checklistResponses[${question.id}].fieldValues[${field.id}]"
                                                                     <c:if test="${field.required}">
                                                                         required
+                                                                    </c:if>
+                                                                     value="${assessmentRequest.checklistResponses[question.id].fieldValues[field.id]}"
+                                                                     <c:if test="${assessmentReadOnly}">
+                                                                        readonly
                                                                     </c:if>>
                                                          </c:when>
 
@@ -356,7 +546,11 @@
                                                                     name="checklistResponses[${question.id}].fieldValues[${field.id}]"
                                                                     <c:if test="${field.required}">
                                                                         required
-                                                                    </c:if>>
+                                                                    </c:if>
+                                                                     value="${assessmentRequest.checklistResponses[question.id].fieldValues[field.id]}"
+                                                                       <c:if test="${assessmentReadOnly}">
+                                                                         readonly
+                                                                       </c:if>>
                                                          </c:when>
 
                                                          <c:when test="${field.fieldType == 'TIME'}">
@@ -365,12 +559,20 @@
                                                                     name="checklistResponses[${question.id}].fieldValues[${field.id}]"
                                                                     <c:if test="${field.required}">
                                                                         required
+                                                                    </c:if>
+                                                                     value="${assessmentRequest.checklistResponses[question.id].fieldValues[field.id]}"
+                                                                     <c:if test="${assessmentReadOnly}">
+                                                                       readonly
                                                                     </c:if>>
                                                          </c:when>
 
                                                          <c:otherwise>
                                                              <input type="text" class="form-control form-control-sm"
-                                                                    name="checklistResponses[${question.id}].fieldValues[${field.id}]">
+                                                              name="checklistResponses[${question.id}].fieldValues[${field.id}]"
+                                                              value="${assessmentRequest.checklistResponses[question.id].fieldValues[field.id]}"
+                                                                   <c:if test="${assessmentReadOnly}">
+                                                                              readonly
+                                                                          </c:if>>
                                                          </c:otherwise>
                                                      </c:choose>
                                                  </div>
@@ -382,6 +584,7 @@
                                  <!-- THIS IS THE HIDDEN CHECKLIST ID -->
                                  <input type="hidden" name="checklistResponses[${question.id}].checklistId"  value="${question.id}">
                                  </td>
+
                                 <td class="text-center">
                                  <div class="form-check d-flex justify-content-center align-items-center gap-1">
                                             <input type="radio"
@@ -389,7 +592,11 @@
                                                    name="checklistResponses[${question.id}].response"
                                                    value="YES"
                                                    data-question-id="${question.id}"
-                                                   id="yes_${question.id}">
+                                                     data-question-code="${question.questionCode}"
+                                                   id="yes_${question.id}"
+                                                   <c:if test="${assessmentRequest.checklistResponses[question.id].response == 'YES'}">
+                                                     checked</c:if>
+                                                    <c:if test="${assessmentReadOnly}"> disabled</c:if>>
                                                 <label class="form-check-label mb-0" for="yes_${question.id}">
                                                    Yes
                                                  </label>
@@ -404,9 +611,15 @@
                                                    name="checklistResponses[${question.id}].response"
                                                    value="NO"
                                                    data-question-id="${question.id}"
-                                                    id="no_${question.id}">
-                                            <label class="form-check-label mb-0"
-                                                           for="no_${question.id}">
+                                                    data-question-code="${question.questionCode}"
+                                                    id="no_${question.id}"
+                                                    <c:if test="${assessmentRequest.checklistResponses[question.id].response == 'NO'}">
+                                                               checked
+                                                           </c:if>
+                                                           <c:if test="${assessmentReadOnly}">
+                                                               disabled
+                                                           </c:if>>
+                                            <label class="form-check-label mb-0" for="no_${question.id}">
                                                         No
                                                     </label>
                                                 </div>
@@ -438,12 +651,6 @@
     </div>
 </div>
 
-<!--<div id="electricalIsolationMessage" class="alert alert-warning mt-3" style="display:none;">
-    Electrical isolation is required.
-    The permit will be forwarded to the
-    Electrical Department for isolation and testing.
-</div>  -->
-
 <!-- SECTION E -->
 
 <div class="card shadow-sm mb-4">
@@ -460,12 +667,18 @@
             </div>
             <div class="col-md-2 text-center">
                 <label class="form-label d-block">  Yes</label>
-                <input type="radio" class="form-check-input" name="postWorkMeasures[0].response" value="YES">
+                <input type="radio" class="form-check-input" name="postWorkMeasures[0].response" value="YES"
+                <c:if test="${assessmentRequest.postWorkMeasures[0].response == 'YES'}">
+                  checked </c:if>
+                  <c:if test="${assessmentReadOnly}">disabled</c:if>>
             </div>
 
             <div class="col-md-2 text-center">
                 <label class="form-label d-block"> No</label>
-                <input type="radio" class="form-check-input" name="postWorkMeasures[0].response" value="NO">
+                <input type="radio" class="form-check-input" name="postWorkMeasures[0].response" value="NO"
+                <c:if test="${assessmentRequest.postWorkMeasures[0].response == 'NO'}">
+                  checked</c:if>
+                  <c:if test="${assessmentReadOnly}">disabled</c:if>>
             </div>
 
             <input type="hidden" name="postWorkMeasures[0].itemCode" value="E-1">
@@ -474,39 +687,82 @@
             <div class="col-md-8">
                 <strong> 2. </strong>
                 Other:
-                <input type="text" class="form-control mt-2" name="postWorkMeasures[1].otherText">
+                <input type="text" class="form-control mt-2" name="postWorkMeasures[1].otherText"
+                value="${assessmentRequest.postWorkMeasures[1].otherText}"
+                       <c:if test="${assessmentReadOnly}">
+                           readonly
+                       </c:if>>
             </div>
 
             <div class="col-md-2 text-center">
                 <label class="form-label d-block">  Yes </label>
-                <input type="radio" class="form-check-input" name="postWorkMeasures[1].response" value="YES">
+                <input type="radio" class="form-check-input" name="postWorkMeasures[1].response" value="YES"
+                 <c:if test="${assessmentRequest.postWorkMeasures[1].response == 'YES'}">checked</c:if>
+                  <c:if test="${assessmentReadOnly}"> disabled </c:if>>
             </div>
 
             <div class="col-md-2 text-center">
                 <label class="form-label d-block"> No </label>
-                <input type="radio"  class="form-check-input" name="postWorkMeasures[1].response" value="NO">
+                <input type="radio"  class="form-check-input" name="postWorkMeasures[1].response" value="NO"
+                <c:if test="${assessmentRequest.postWorkMeasures[1].response == 'NO'}">checked</c:if>
+                                  <c:if test="${assessmentReadOnly}"> disabled </c:if>>
             </div>
             <input type="hidden" name="postWorkMeasures[1].itemCode" value="E-2">
         </div>
     </div>
 </div>
-<div class="d-flex justify-content-end mt-4">
-    <button type="submit" class="btn btn-success btn-lg">
-       Save & Continue</button>
-</div>
+
+<c:choose>
+    <c:when test="${not assessmentReadOnly}">
+        <div class="d-flex justify-content-end mt-4 mb-4">
+            <button type="submit" id="assessmentSubmitButton"
+                    class="btn btn-success btn-lg">
+                Save &amp; Continue
+            </button>
+        </div>
+    </c:when>
+
+    <c:when test="${assessmentReadOnly && not canPrint}">
+        <div class="alert alert-warning mt-4 mb-4">
+            <strong>Electrical Isolation Pending.</strong>
+            <div class="mt-1">
+                Permit cannot be printed until electrical isolation
+                is completed by Maintenance.
+            </div>
+        </div>
+    </c:when>
+
+    <c:when test="${canPrint}">
+        <div class="d-flex justify-content-end mt-4 mb-4">
+            <button type="submit" formmethod="post"
+              formaction="${pageContext.request.contextPath}/issuer/permits/${permit.id}/print"
+               class="btn btn-success btn-lg">
+                Print Permit
+            </button>
+        </div>
+    </c:when>
+
+</c:choose>
+
+</form>
 
 </form>
 
 </body>
 <script>
-
 document.addEventListener("DOMContentLoaded", function () {
 
     const issuerName = "${permit.issuerName}";
+    const electricalIsolationMessage = document.getElementById("electricalIsolationMessage");
+    const assessmentSubmitButton = document.getElementById("assessmentSubmitButton");
+
+
     document.querySelectorAll(".checklist-response")
         .forEach(function (radio) {
             radio.addEventListener("change", function () {
-                const questionId = this.dataset.questionId;
+                const questionId =  this.dataset.questionId;
+                const questionCode = this.dataset.questionCode;
+
 
                 const sign = document.getElementById("implementedSign_" + questionId);
 
@@ -515,8 +771,32 @@ document.addEventListener("DOMContentLoaded", function () {
                     sign.classList.remove("text-muted");
                 }
 
-            });
 
+                if (questionCode === "3") {
+                    if (this.value === "YES") {
+                        electricalIsolationMessage.style.display = "block";
+                        assessmentSubmitButton.textContent =
+                            "Save Assessment & Create Work Request";
+                        assessmentSubmitButton.classList.remove(
+                            "btn-success"
+                        );
+                        assessmentSubmitButton.classList.add(
+                            "btn-warning"
+                        );
+                    }
+                    else if (this.value === "NO") {
+                        electricalIsolationMessage.style.display = "none";
+                        assessmentSubmitButton.textContent =
+                            "Save & Continue";
+                        assessmentSubmitButton.classList.remove(
+                            "btn-warning"
+                        );
+                        assessmentSubmitButton.classList.add(
+                            "btn-success"
+                        );
+                    }
+                }
+            });
         });
 
 });

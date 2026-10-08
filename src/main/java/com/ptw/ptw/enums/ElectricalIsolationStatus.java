@@ -4,6 +4,5 @@ public enum ElectricalIsolationStatus {
 
     NOT_REQUIRED,
     PENDING,
-    IN_PROGRESS,
     COMPLETED
 }

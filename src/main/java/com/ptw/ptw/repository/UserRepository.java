@@ -21,4 +21,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     List<User> findByDepartmentIdAndActiveTrue(Long departmentId);
+
+    @Query("""
+       SELECT u FROM User u LEFT JOIN FETCH u.department WHERE u.username = :username
+       """)
+    Optional<User> findByUsernameWithDepartment(@Param("username") String username);
 }

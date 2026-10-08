@@ -42,5 +42,8 @@ public class User {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "contact_number", length = 30)
+    private String contactNumber;
+
 
 }

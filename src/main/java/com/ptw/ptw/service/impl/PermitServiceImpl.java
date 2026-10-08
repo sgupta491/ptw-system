@@ -2,6 +2,7 @@ package com.ptw.ptw.service.impl;
 
 import com.ptw.ptw.dto.*;
 import com.ptw.ptw.entity.*;
+import com.ptw.ptw.enums.ElectricalIsolationStatus;
 import com.ptw.ptw.enums.PermitStatus;
 import com.ptw.ptw.enums.PermitWorkflowAction;
 import com.ptw.ptw.repository.*;
@@ -53,6 +54,7 @@ public class PermitServiceImpl implements PermitService {
     private final PermitFinalVerificationRepository finalVerificationRepository;
 
     private final EmailNotificationService emailNotificationService;
+    private final WorkRequestRepository workRequestRepository;
 
 
 
@@ -154,7 +156,8 @@ public class PermitServiceImpl implements PermitService {
             throw new RuntimeException(" You are not authorized to access this permit.");
         }
 
-        if(permit.getPermitStatus() != PermitStatus.PERMIT_ISSUED) {
+        if(permit.getPermitStatus() != PermitStatus.PERMIT_ISSUED
+                && permit.getPermitStatus() != PermitStatus.ELECTRICAL_ISOLATION) {
             throw new RuntimeException("Permit is not ready for assessment.");
         }
 
@@ -174,9 +177,16 @@ public class PermitServiceImpl implements PermitService {
             throw new RuntimeException("You are not authorized to approve this permit");
         }
 
-        /*if (permit.getPermitStatus() != PermitStatus.PERMIT_ISSUED) {
+       /* if (permit.getPermitStatus() != PermitStatus.PERMIT_ISSUED) {
             throw new RuntimeException( "Permit is not awaiting issuer approval");
         }*/
+
+        if (Boolean.TRUE.equals(permit.getElectricalIsolationRequired())
+                && permit.getElectricalIsolationStatus()
+                != ElectricalIsolationStatus.COMPLETED) {
+
+            throw new RuntimeException( "Electrical isolation is not completed");
+        }
 
         LocalDateTime now = LocalDateTime.now();
 
@@ -631,6 +641,7 @@ public class PermitServiceImpl implements PermitService {
 
     private PermitApprovalResponse buildPermitApprovalResponse(Permit permit) {
 
+
         List<HazardOption> hazards = permitHazardRepository.findByPermit(permit)
                         .stream()
                         .map(PermitHazard::getHazard)
@@ -688,6 +699,7 @@ public class PermitServiceImpl implements PermitService {
                         )
                         .toList();
 
+        WorkRequest workRequest = workRequestRepository.findByPermit(permit).orElse(null);
 
         return PermitApprovalResponse.builder()
                 .permit(mapToResponse(permit))
@@ -697,6 +709,10 @@ public class PermitServiceImpl implements PermitService {
                 .checklistResponses(checklistResponses)
                 .postWorkMeasures(postWorkMeasures)
                 .issuerApprovalDateTime(permit.getIssuerApprovalDateTime())
+                .electricalWorkOrderNumber(workRequest != null ? workRequest.getWoNumber() : null)
+                .electricalEquipmentNumber(workRequest != null ? workRequest.getIsolationEquipmentNumber(): null)
+                .electricalFeederNumber(workRequest != null ? workRequest.getFeederNumber() : null)
+                .electricalLotoNumber(workRequest != null? workRequest.getLotoNumber() : null)
                 .build();
     }
 
@@ -766,76 +782,14 @@ public class PermitServiceImpl implements PermitService {
                                 .format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm"))
                                 : null
                 )
+                .electricalIsolationRequired(permit.getElectricalIsolationRequired())
                 .build();
     }
 
 
     private Permit findPermitEntity(Long permitId) {
-
         return  permitRepository.findById(permitId)
                 .orElseThrow(()-> new RuntimeException("Permit not found" + permitId));
     }
-
-
-    private void validateIssuer(Permit permit, String username) {
-
-        if(!permit.getIssuer().getUsername().equals(username)) {
-            throw new RuntimeException("You are not authorized to modify this permit");
-        }
-    }
-
-
-    private void updateSectionA(Permit permit, PermitRequest permitRequest) {
-
-        Department acceptorDepartment = departmentRepository.findById(permitRequest.getAcceptorDepartmentId())
-                .orElseThrow(() -> new RuntimeException("Acceptor Department not found"));
-
-        User acceptor = userRepository.findById(permitRequest.getAcceptorId())
-                .orElseThrow(() -> new RuntimeException("Acceptor not found"));
-
-        permit.setAcceptorDepartment(acceptorDepartment);
-        permit.setAcceptor(acceptor);
-
-        Boolean contractorDeployed = Boolean.TRUE.equals(permitRequest.getContractorDeployed());
-        Contractor contractor = null;
-        String supervisor = null;
-
-        if(contractorDeployed)
-        {
-            if(permitRequest.getContractorSupervisor() == null)
-            {
-                throw new RuntimeException("Contractor is required");
-            }
-        }
-
-        if(permitRequest.getContractorSupervisor() == null || permitRequest.getContractorSupervisor().isBlank())
-        {
-            throw new RuntimeException("Contractor Supervisor is required");
-        }
-
-        contractor = contractorRepository.findById(permitRequest.getContractorId())
-                .orElseThrow(() -> new RuntimeException("Contractor not found"));
-        supervisor = permitRequest.getContractorSupervisor().trim();
-
-        permit.setContractorDeployed(contractorDeployed);
-        permit.setContractor(contractor);
-        permit.setContractorSupervisor(supervisor);
-    }
-
-
-    private void updateSectionB(Permit permit, PermitRequest permitRequest) {
-
-        permit.setEquipmentNumber(permitRequest.getEquipmentNumber());
-        permit.setLocation(permitRequest.getLocation());
-        permit.setProposedWork(permitRequest.getProposedWork());
-        permit.setLiftShiftByEquipment(permitRequest.getLiftShiftByEquipment());
-        permit.setHazardousChemicalExposure(permitRequest.getHazardousChemicalExposure());
-        permit.setOtherHazardActivity(permitRequest.getOtherHazardActivity());
-        permit.setValidOnDate(permitRequest.getValidOnDate());
-        permit.setTimeFrom(permitRequest.getTimeFrom());
-        permit.setTimeTo(permitRequest.getTimeTo());
-    }
-
-
 
 }

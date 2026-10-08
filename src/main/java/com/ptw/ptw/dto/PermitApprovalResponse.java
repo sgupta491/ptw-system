@@ -29,4 +29,9 @@ public class PermitApprovalResponse {
     // Section F
     private LocalDateTime issuerApprovalDateTime;
 
+    private String electricalWorkOrderNumber;
+    private String electricalEquipmentNumber;
+    private String electricalFeederNumber;
+    private String electricalLotoNumber;
+
 }

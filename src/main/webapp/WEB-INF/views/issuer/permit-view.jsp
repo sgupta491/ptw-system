@@ -10,6 +10,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Permit Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <jsp:include page="/WEB-INF/views/common/toast.jsp"/>
 </head>
 <body class="bg-light">
 <div class="container my-5">

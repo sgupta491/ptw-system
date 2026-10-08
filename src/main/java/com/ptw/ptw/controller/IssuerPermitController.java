@@ -2,6 +2,8 @@ package com.ptw.ptw.controller;
 
 import com.ptw.ptw.dto.*;
 import com.ptw.ptw.entity.User;
+import com.ptw.ptw.enums.ElectricalIsolationStatus;
+import com.ptw.ptw.enums.PermitStatus;
 import com.ptw.ptw.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class IssuerPermitController {
     private final HazardService hazardService;
     private final ChecklistService checklistService;
     private final PermitAssessmentService permitAssessmentService;
+    private final WorkRequestService workRequestService;
 
 
     @GetMapping
@@ -59,7 +62,8 @@ public class IssuerPermitController {
 
     @PostMapping
     public String createPermit(@Valid @ModelAttribute("permitRequest") PermitCreationRequest request,
-                               BindingResult bindingResult, Authentication authentication,Model model) {
+                               BindingResult bindingResult, Authentication authentication,Model model,
+                               RedirectAttributes redirectAttributes) {
 
         if(bindingResult.hasErrors()) {
             loadFormData(model);
@@ -68,6 +72,7 @@ public class IssuerPermitController {
 
         try{
             PermitResponse permit = permitService.createPermit(request, authentication.getName());
+            redirectAttributes.addFlashAttribute("successMessage","Permit created successfully.");
             return  "redirect:/issuer/permits/" + permit.getId();
         }
         catch(RuntimeException e){
@@ -75,6 +80,7 @@ public class IssuerPermitController {
             model.addAttribute("error", e.getMessage());
             loadIssuer(authentication, model);
             loadFormData(model);
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to create permit.");
             return "issuer/permit-form";
         }
 
@@ -117,23 +123,57 @@ public class IssuerPermitController {
         PermitResponse permit = permitService.getPermitForAssessment( id, username);
         List<HazardOption> hazards = hazardService.findByPermitType(permit.getPermitTypeId());
         List<ChecklistOption> checklistQuestions  = checklistService.findByPermitType(permit.getPermitTypeId());
+        PermitAssessmentRequest assessmentRequest = permitAssessmentService.getExistingAssessment(id, username);
 
         model.addAttribute("permit",permit);
         model.addAttribute("hazards",hazards);
         model.addAttribute("checklistQuestions",checklistQuestions);
-        model.addAttribute("assessmentRequest", new PermitAssessmentRequest()
-        );
+        model.addAttribute("assessmentRequest", assessmentRequest);
+
+        boolean assessmentReadOnly = permit.getStatus() == PermitStatus.ELECTRICAL_ISOLATION
+                         ||( permit.getStatus() == PermitStatus.PERMIT_ISSUED
+                         && "ASSESSMENT_COMPLETED".equals(  permit.getCurrentStage()
+        ));
+
+        boolean canPrint = permit.getStatus() == PermitStatus.PERMIT_ISSUED
+                        && "ASSESSMENT_COMPLETED".equals(
+                        permit.getCurrentStage()
+                );
+
+        model.addAttribute("assessmentReadOnly",assessmentReadOnly);
+        model.addAttribute("canPrint", canPrint);
+
+        try {
+            WorkRequestResponse workRequest = workRequestService.getWorkRequestForIssuer(id, username);
+            model.addAttribute("workRequest", workRequest);
+        } catch (RuntimeException ignored) {
+            // No work request exists.
+        }
 
         return "issuer/permit-assessment";
     }
 
     @PostMapping("/{id}/assessment")
     public String saveAssessment( @PathVariable Long id,@ModelAttribute("assessmentRequest")
-                PermitAssessmentRequest request,Authentication authentication,Model model) {
+                PermitAssessmentRequest request,Authentication authentication,Model model,RedirectAttributes redirectAttributes) {
         try {
 
-            permitAssessmentService.saveAssessment(id,request,authentication.getName());
-            return "redirect:/issuer/permits/" + id;
+            PermitResponse response = permitAssessmentService.saveAssessment(id,request,authentication.getName());
+
+            if (response.getElectricalIsolationStatus() == ElectricalIsolationStatus.PENDING) {
+
+                redirectAttributes.addFlashAttribute("successMessage",
+                        "Assessment saved successfully. Electrical Work Request created.");
+
+                return "redirect:/issuer/permits/" + id + "/work-request";
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Assessment completed successfully.");
+
+            permitService.approvePermitForPrint(id,authentication.getName());
+            return "redirect:/issuer/permits/"+ id + "/print";
+
 
         } catch (RuntimeException e) {
 
@@ -147,6 +187,7 @@ public class IssuerPermitController {
             model.addAttribute("hazards",hazards);
             model.addAttribute("checklistQuestions",checklistQuestions);
             model.addAttribute("assessmentRequest",request);
+            redirectAttributes.addFlashAttribute("errorMessage","Failed to save assessment.");
 
             return "issuer/permit-assessment";
         }
@@ -154,10 +195,20 @@ public class IssuerPermitController {
 
 
     @PostMapping("/{id}/print")
-    public String startWorkAndPrint(@PathVariable Long id, Authentication authentication) {
+    public String startWorkAndPrint(@PathVariable Long id, Authentication authentication, RedirectAttributes redirectAttributes) {
 
-        permitService.approvePermitForPrint(id, authentication.getName());
-        return "redirect:/issuer/permits/" + id + "/print";
+        try {
+            permitService.approvePermitForPrint(id, authentication.getName());
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Permit approved successfully. Ready for printing.");
+            return "redirect:/issuer/permits/" + id + "/print";
+        }
+             catch (RuntimeException e) {
+                redirectAttributes.addFlashAttribute("errorMessage","Failed to approve permit for printing.");
+
+                return "redirect:/issuer/permits/" + id + "/assessment";
+            }
+
     }
 
 
