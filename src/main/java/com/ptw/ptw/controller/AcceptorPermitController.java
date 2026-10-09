@@ -96,10 +96,11 @@ public class AcceptorPermitController {
         try {
 
             acceptorPermitService.uploadDocument(id, documentType, file, authentication.getName());
-            redirectAttributes.addFlashAttribute("success","Document uploaded successfully.");
+            redirectAttributes.addFlashAttribute("successMessage","Document uploaded successfully.");
         } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error",e.getMessage()
-            );
+
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to upload document.");
         }
         return "redirect:/acceptor/permits/" + id + "/documents";
     }
@@ -141,11 +142,12 @@ public class AcceptorPermitController {
 
         try {
                 acceptorPermitService.closePermit(id, validTillDate, validTillTime, authentication.getName());
-                redirectAttributes.addFlashAttribute("success","Permit closed successfully.");
+                redirectAttributes.addFlashAttribute("successMessage","Permit closed successfully.");
                  return "redirect:/acceptor/permits";
 
         } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error",e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to upload document.");
             return "redirect:/acceptor/permits/"+ id+ "/documents";
         }
 
@@ -156,10 +158,11 @@ public class AcceptorPermitController {
 
         try {
             acceptorPermitService.requestExtension(id,authentication.getName());
-            redirectAttributes.addFlashAttribute("success","Extension request sent to the Issuer.");
+            redirectAttributes.addFlashAttribute("successMessage","Extension request sent to the Permit Issuer.");
 
         } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error",e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to sent extension request to the Permit Issuer.");
         }
         return "redirect:/acceptor/permits";
     }

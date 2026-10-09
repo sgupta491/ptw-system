@@ -10,7 +10,7 @@
     <title>Maintenance Work Order List</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"   rel="stylesheet">
-    <jsp:include page="/WEB-INF/views/common/toast.jsp"/>
+
     <style>
 
         body {
@@ -52,7 +52,7 @@
 </head>
 
 <body>
-
+<jsp:include page="/WEB-INF/views/common/toast.jsp"/>
 <div class="page-wrapper">
 
     <div class="d-flex justify-content-between align-items-center mb-4">

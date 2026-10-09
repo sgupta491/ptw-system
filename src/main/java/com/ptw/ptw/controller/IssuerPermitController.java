@@ -222,10 +222,21 @@ public class IssuerPermitController {
     }
 
     @PostMapping("/{id}/work-completed")
-    public String markWorkCompleted(@PathVariable Long id, Authentication authentication) {
+    public String markWorkCompleted(@PathVariable Long id, Authentication authentication, RedirectAttributes redirectAttributes) {
 
-        permitService.markWorkCompleted(id, authentication.getName());
-        return "redirect:/issuer/permits/" + id;
+        try {
+
+            permitService.markWorkCompleted(id, authentication.getName());
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Work marked as completed successfully.");
+             return "redirect:/issuer/permits/" + id;
+
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to mark work as completed.");
+
+            return "redirect:/issuer/permits";
+        }
     }
 
     @GetMapping("/{id}/documents")
@@ -255,10 +266,10 @@ public class IssuerPermitController {
 
         try {
                 permitService.acceptExtension(id, authentication.getName());
-                 redirectAttributes.addFlashAttribute("success","Extension accepted successfully." );
+                 redirectAttributes.addFlashAttribute("successMessage","Extension accepted successfully." );
 
         } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error",e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage","Failed to accept extension.");
         }
 
         return "redirect:/issuer/permits";
@@ -271,10 +282,10 @@ public class IssuerPermitController {
         try {
 
             permitService.rejectExtension( id, rejectionRemark, authentication.getName());
-            redirectAttributes.addFlashAttribute("success","Extension rejected successfully.");
+            redirectAttributes.addFlashAttribute("successMessage","Extension rejected successfully.");
 
         } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error",e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage", "Failed to reject extension.");
         }
 
         return "redirect:/issuer/permits";
@@ -303,9 +314,15 @@ public class IssuerPermitController {
 
         try {
             PermitResponse permit = permitService.printExtensionForm(id, authentication.getName());
+            redirectAttributes.addFlashAttribute(
+                    "successMessage",
+                    "Extension form prepared for printing successfully."
+            );
+
             model.addAttribute("permit", permit);
             model.addAttribute("autoPrint", true);
-
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Failed to prepare extension form for printing.");
             return "issuer/extension-print";
 
         } catch (RuntimeException e) {

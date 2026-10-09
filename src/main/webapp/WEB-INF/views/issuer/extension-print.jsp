@@ -15,7 +15,7 @@
 </head>
 
 <body>
-
+<jsp:include page="/WEB-INF/views/common/toast.jsp"/>
 <div class="page">
     <div class="title">
         Cold Work Permit Extension

@@ -1,15 +1,20 @@
 package com.ptw.ptw.service.impl;
 
 import com.ptw.ptw.entity.Permit;
+import com.ptw.ptw.entity.WorkRequest;
 import com.ptw.ptw.service.EmailNotificationService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EmailNotificationServiceImpl implements EmailNotificationService {
 
     private final JavaMailSender mailSender;
@@ -28,8 +33,7 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
 
         String subject =  "Extension Request - " + permit.getPermitNumber();
 
-        String body =
-                "Dear " +
+        String body = "Dear " +
                         getFullName(permit.getIssuer()) +
                         ",\n\n" +
 
@@ -116,6 +120,86 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                         "PTW System";
 
         sendMail(permit.getAcceptor().getEmail(), subject, body);
+    }
+
+
+    @Override
+    public void sendWorkRequestCreatedEmail(WorkRequest workRequest, List<String> maintenanceEmails) {
+
+        if (maintenanceEmails == null || maintenanceEmails.isEmpty()) {
+            log.warn("No maintenance email recipients for work order {}", workRequest.getWoNumber());
+            return;
+        }
+
+        String permitNumber = workRequest.getPermit().getPermitNumber();
+        String requesterName =  workRequest.getRequester().getFirstName()
+                        + " "
+                        + workRequest.getRequester().getLastName();
+
+        String subject = "New Work Order - Permit " + permitNumber;
+
+        String body = "Dear Maintenance Team,\n\n"
+                        + "A new electrical work request has been created "
+                        + "and is awaiting your action.\n\n"
+                        + "Permit Number: " + permitNumber + "\n"
+                        + "Work Order Number: " + workRequest.getWoNumber() + "\n"
+                        + "Requested By: " + requesterName + "\n"
+                        + "Department: " + workRequest.getRequestingDepartment().getDepartmentName()
+                        + "\n"
+                        + "Equipment Number: " + workRequest.getEquipmentNumber() + "\n"
+                        + "Location: " + workRequest.getWorkLocation() + "\n"
+                        + "Work To Be Done By: "
+                        + workRequest.getWorkToBeDoneBy().getTradeName() + "\n\n"
+                        + "Please log in to the PTW system and do the needful.\n\n"
+                        + "Regards,\n"
+                        + "PTW System";
+
+        for (String recipient : maintenanceEmails) {
+
+            if (recipient == null || recipient.isBlank()) {
+                continue;
+            }
+
+            sendMail(recipient, subject, body);
+        }
+    }
+
+
+    @Override
+    public void sendWorkRequestCompletedEmail(WorkRequest workRequest) {
+
+        String permitNumber = workRequest.getPermit().getPermitNumber();
+        String issuerEmail = workRequest.getPermit().getIssuer().getEmail();
+
+        String subject = "Work Order Completed - Permit" + permitNumber;
+
+        if (issuerEmail == null || issuerEmail.isBlank()) {
+            log.warn("Issuer email missing for permit {}", permitNumber);
+            return;
+        }
+
+            String body = "Dear "
+                            + workRequest.getPermit().getIssuer().getFirstName() +" "
+                            + workRequest.getPermit().getIssuer().getLastName()
+                         + ",\n\n"
+                            + "The electrical work order for your permit "
+                            + "has been completed by Maintenance department.\n\n"
+                            + "Permit Number: " + permitNumber + "\n"
+                            + "Work Order Number: " + workRequest.getWoNumber() + "\n"
+                            + "Status: " + workRequest.getStatus() + "\n"
+                            + "Equipment Number: "
+                            + workRequest.getIsolationEquipmentNumber() + "\n"
+                            + "Feeder Number: " + workRequest.getFeederNumber() + "\n"
+                            + "LOTO Number: " + workRequest.getLotoNumber() + "\n"
+                            + "Completed By: " + workRequest.getWorkCompletedBy() + "\n"
+                            + "Completed At: " + workRequest.getCompletedAt() + "\n\n"
+                            + "Please log in to the PTW system to continue "
+                            + "the permit workflow.\n\n"
+                            + "Regards,\n"
+                            + "PTW System";
+
+        sendMail(issuerEmail, subject, body);
+
     }
 
 

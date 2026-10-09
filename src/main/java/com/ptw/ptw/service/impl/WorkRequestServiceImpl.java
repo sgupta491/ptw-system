@@ -20,6 +20,7 @@ import com.ptw.ptw.repository.WorkRequestRepository;
 import com.ptw.ptw.repository.WorkRequestTradeMasterRepository;
 import com.ptw.ptw.entity.PermitWorkflowHistory;
 import com.ptw.ptw.repository.PermitWorkflowHistoryRepository;
+import com.ptw.ptw.service.EmailNotificationService;
 import com.ptw.ptw.service.WorkRequestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -41,6 +42,7 @@ public class WorkRequestServiceImpl implements WorkRequestService {
     private final WorkRequestTradeMasterRepository tradeMasterRepository;
     private final MaintenanceTypeMasterRepository maintenanceTypeMasterRepository;
     private final PermitWorkflowHistoryRepository workflowHistoryRepository;
+    private final EmailNotificationService emailNotificationService;
 
     @Override
     public WorkRequestResponse createWorkRequest(Long permitId, WorkRequestCreationRequest request, String username) {
@@ -141,6 +143,15 @@ public class WorkRequestServiceImpl implements WorkRequestService {
                         .build()
         );
 
+        List<String> maintenanceEmails = userRepository.findByRole_RoleNameAndActiveTrue("MAINTENANCE")
+                        .stream()
+                        .map(User::getEmail)
+                        .filter(email -> email != null && !email.isBlank())
+                        .distinct()
+                        .toList();
+
+        emailNotificationService.sendWorkRequestCreatedEmail(saved, maintenanceEmails);
+
         return mapToResponse(workRequestRepository.save(saved));
     }
 
@@ -233,6 +244,7 @@ public class WorkRequestServiceImpl implements WorkRequestService {
 
         WorkRequest savedWorkRequest = workRequestRepository.save(workRequest);
 
+
         Permit permit = workRequest.getPermit();
         permit.setElectricalIsolationStatus(ElectricalIsolationStatus.COMPLETED);
         permit.setPermitStatus(PermitStatus.PERMIT_ISSUED);
@@ -254,6 +266,8 @@ public class WorkRequestServiceImpl implements WorkRequestService {
                         .build()
         );
 
+        // Notify the original Issuer after electrical isolation is completed.
+        emailNotificationService.sendWorkRequestCompletedEmail(workRequest);
         return mapToResponse(savedWorkRequest);
     }
 
